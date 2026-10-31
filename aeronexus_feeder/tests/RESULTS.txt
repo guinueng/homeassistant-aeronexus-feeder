@@ -1,5 +1,4 @@
-2026-10-31 | Windows | Python 3.14 | local loopback TCP fixtures only
-Command: python -B -m unittest discover -s tests -v
+1.1.0 | Linux container | Python 3.14 | 43 offline regression tests
 
 test_discovery_cache_and_refresh (test_relay.DiscoveryTests.test_discovery_cache_and_refresh) ... ok
 test_explicit_host_bypasses_supervisor (test_relay.DiscoveryTests.test_explicit_host_bypasses_supervisor) ... ok
@@ -8,13 +7,16 @@ test_read_only_default_role_endpoint_and_token_not_logged (test_relay.DiscoveryT
 test_redirect_refused (test_relay.DiscoveryTests.test_redirect_refused) ... ok
 test_standard_and_local_slugs (test_relay.DiscoveryTests.test_standard_and_local_slugs) ... ok
 test_connect_has_finite_send_timeout (test_relay.NetworkTests.test_connect_has_finite_send_timeout) ... ok
-test_real_tcp_forwarding_and_heartbeat (test_relay.NetworkTests.test_real_tcp_forwarding_and_heartbeat) ... ok
+test_real_tcp_forwarding_and_heartbeat (test_relay.NetworkTests.test_real_tcp_forwarding_and_heartbeat) ... Beast disconnected; retry in 0s
+ok
 test_real_tcp_source_and_upstream_reconnect_uuid_repeated (test_relay.NetworkTests.test_real_tcp_source_and_upstream_reconnect_uuid_repeated) ... AeroNexus disconnected; check UUID registration or duplicate use; retry in 0s
 Beast disconnected; retry in 0s
 AeroNexus disconnected; check UUID registration or duplicate use; retry in 0s
 ok
 test_restarting_with_changed_uuid_sends_new_identity (test_relay.NetworkTests.test_restarting_with_changed_uuid_sends_new_identity) ... Beast disconnected; retry in 0s
+AeroNexus disconnected; check UUID registration or duplicate use; retry in 0s
 Beast disconnected; retry in 0s
+AeroNexus disconnected; check UUID registration or duplicate use; retry in 0s
 ok
 test_all_mode_still_excludes_mlat (test_relay.ParserTests.test_all_mode_still_excludes_mlat) ... ok
 test_df17_df18_only (test_relay.ParserTests.test_df17_df18_only) ... ok
@@ -31,8 +33,28 @@ test_invalid_json_and_missing_file (test_relay.SettingsTests.test_invalid_json_a
 test_invalid_options (test_relay.SettingsTests.test_invalid_options) ... ok
 test_invalid_uuid_is_rejected_without_value_in_error (test_relay.SettingsTests.test_invalid_uuid_is_rejected_without_value_in_error) ... ok
 test_uuid_only_defaults (test_relay.SettingsTests.test_uuid_only_defaults) ... ok
+test_checked_update_starts_then_commits_after_probation (test_upstream.ManagerTests.test_checked_update_starts_then_commits_after_probation) ... ok
+test_new_worker_crash_rolls_back_and_is_not_committed (test_upstream.ManagerTests.test_new_worker_crash_rolls_back_and_is_not_committed) ... New relay exited during its 30-second startup check; rolling back to f8fafdaa694c
+ok
+test_offline_check_still_starts_existing_worker (test_upstream.ManagerTests.test_offline_check_still_starts_existing_worker) ... Upstream update not applied: offline; keeping code=f8fafdaa694c
+ok
+test_full_official_relay_forwards_uuid_adsb_and_excludes_mlat (test_upstream.OfficialWorkerTests.test_full_official_relay_forwards_uuid_adsb_and_excludes_mlat) ... ok
+test_bad_uuid_and_mlat_protocol_rejected (test_upstream.UpstreamTests.test_bad_uuid_and_mlat_protocol_rejected) ... ok
+test_broken_main_is_rejected_even_when_parser_passes (test_upstream.UpstreamTests.test_broken_main_is_rejected_even_when_parser_passes) ... ok
+test_cache_digest_prevents_path_traversal (test_upstream.UpstreamTests.test_cache_digest_prevents_path_traversal) ... ok
+test_cache_survives_restart_and_corruption_falls_back (test_upstream.UpstreamTests.test_cache_survives_restart_and_corruption_falls_back) ... ok
+test_child_does_not_inherit_supervisor_token_or_other_secrets (test_upstream.UpstreamTests.test_child_does_not_inherit_supervisor_token_or_other_secrets) ... ok
+test_download_change_then_304_keeps_pending_update_available (test_upstream.UpstreamTests.test_download_change_then_304_keeps_pending_update_available) ... ok
+test_download_failure_keeps_active_cache (test_upstream.UpstreamTests.test_download_failure_keeps_active_cache) ... ok
+test_endpoint_changes_have_a_distinct_release (test_upstream.UpstreamTests.test_endpoint_changes_have_a_distinct_release) ... ok
+test_html_truncated_multiple_and_oversize_rejected (test_upstream.UpstreamTests.test_html_truncated_multiple_and_oversize_rejected) ... ok
+test_installer_shell_is_never_executed (test_upstream.UpstreamTests.test_installer_shell_is_never_executed) ... ok
+test_invalid_python_or_changed_interface_rejected (test_upstream.UpstreamTests.test_invalid_python_or_changed_interface_rejected) ... ok
+test_original_extracts_and_passes_actual_subprocess_checks (test_upstream.UpstreamTests.test_original_extracts_and_passes_actual_subprocess_checks) ... ok
+test_redirect_only_allows_same_https_origin (test_upstream.UpstreamTests.test_redirect_only_allows_same_https_origin) ... ok
+test_update_interval_options (test_upstream.UpstreamTests.test_update_interval_options) ... ok
 
 ----------------------------------------------------------------------
-Ran 25 tests in 5.710s
+Ran 43 tests in 9.536s
 
 OK

@@ -31,3 +31,9 @@ Home Assistant 공식 문서와 upstream 소스를 조회했습니다. 사용자
 AeroNexus 프로토콜 출처는 사용자가 업로드한 스크립트입니다.
 별도 서버 인증 규격이나 서버 수신 확인 API를 추정해 추가하지 않았습니다.
 원본과 SHA-256은 `NOTICE.md`를 참조하세요.
+
+## 1.1.0 추가 확인
+
+- [공식 최신 feed.sh](https://aeronexus.kr/feed.sh): HTTPS 실다운로드 및 현재 원본 비교.
+- [GitHub 공개 범위 설정](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/managing-repository-settings/setting-repository-visibility): Public 전환 절차.
+- 원본 배포 허락은 사용자가 받았다고 확인했습니다.

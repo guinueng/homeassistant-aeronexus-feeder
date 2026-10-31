@@ -1,6 +1,8 @@
 FROM ghcr.io/home-assistant/base:3.24
 
-RUN apk add --no-cache python3
+RUN apk add --no-cache python3 \
+    && addgroup -S aeronexus \
+    && adduser -S -D -H -G aeronexus aeronexus
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1

@@ -21,3 +21,9 @@ configuration:
   stats_interval:
     name: Statistics interval (optional)
     description: Seconds between statistics logs; defaults to 60, range 30–3600.
+  update_interval:
+    name: Official relay update interval (optional)
+    description: >-
+      Check the official AeroNexus feed.sh at startup and every 3600 seconds by
+      default. Download, test and apply a compatible Python relay automatically.
+      Range 300–86400 seconds.

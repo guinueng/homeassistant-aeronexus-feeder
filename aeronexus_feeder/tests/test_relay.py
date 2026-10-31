@@ -130,14 +130,23 @@ class SettingsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             p = Path(directory) / "options.json"
             p.write_text('{"uuid":""}', encoding="utf-8")
-            proc = subprocess.Popen([sys.executable, "-B", str(LIB / "relay.py"), "--options", str(p)],
+            proc = subprocess.Popen([sys.executable, "-B", str(LIB / "manager.py"), "--options", str(p)],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            first_line = []
+            ready = threading.Event()
+            def read_startup():
+                first_line.append(proc.stderr.readline())
+                ready.set()
+            reader = threading.Thread(target=read_startup, daemon=True)
+            reader.start()
             try:
-                time.sleep(.4)
+                self.assertTrue(ready.wait(5), "Startup log did not arrive")
                 self.assertIsNone(proc.poll())
             finally:
                 proc.terminate()
+                reader.join(timeout=2)
                 out, err = proc.communicate(timeout=5)
+            err = b"".join(first_line) + err
             self.assertIn(b"Waiting without network connections", err)
             self.assertNotIn(b"connected", out + err)
 

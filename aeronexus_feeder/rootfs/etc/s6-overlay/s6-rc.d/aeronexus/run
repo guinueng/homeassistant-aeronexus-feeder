@@ -1,4 +1,4 @@
 #!/command/with-contenv bash
 set -euo pipefail
 umask 077
-exec python3 -u /usr/local/lib/aeronexus/relay.py
+exec python3 -u /usr/local/lib/aeronexus/manager.py
