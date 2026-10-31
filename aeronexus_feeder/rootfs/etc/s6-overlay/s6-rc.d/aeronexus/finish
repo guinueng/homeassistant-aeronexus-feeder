@@ -1,0 +1,6 @@
+#!/command/with-contenv bash
+# Keep unexpected failures visible to the Supervisor watchdog.
+if [[ "${1}" -ne 0 ]] && [[ "${1}" -ne 256 ]]; then
+    printf '%s\n' "${1}" > /run/s6-linux-init-container-results/exitcode
+    exec /run/s6/basedir/bin/halt
+fi

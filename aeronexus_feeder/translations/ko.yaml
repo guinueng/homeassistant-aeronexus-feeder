@@ -1,0 +1,23 @@
+configuration:
+  uuid:
+    name: AeroNexus UUID
+    description: >-
+      AeroNexus에서 발급받은 36자 UUID를 입력하세요. 비워 두면 연결 없이 대기합니다.
+      입력 후 저장하고 앱을 재시작하세요.
+  beast_host:
+    name: Beast 수신기 주소 (선택)
+    description: >-
+      비워 두면 기존 ADS-B Multi-Portal Feeder를 자동으로 찾습니다.
+      직접 지정할 때는 앱의 내부 호스트명 또는 수신기 IP만 입력하세요.
+      127.0.0.1은 이 AeroNexus 앱 자신을 가리킵니다.
+  beast_port:
+    name: Beast 출력 포트 (선택)
+    description: 생략하면 30005입니다. 수신기 쪽 Beast 출력 포트를 지정합니다.
+  filter:
+    name: 전송 필터 (선택)
+    description: >-
+      기본 adsb는 DF17·18만 전송합니다. all은 진단용입니다.
+      두 모드 모두 MLAT 표식이 있는 결과를 제외합니다.
+  stats_interval:
+    name: 통계 로그 간격 (선택)
+    description: 초 단위입니다. 생략하면 60초, 설정 범위는 30~3600초입니다.

@@ -1,0 +1,38 @@
+2026-10-31 | Windows | Python 3.14 | local loopback TCP fixtures only
+Command: python -B -m unittest discover -s tests -v
+
+test_discovery_cache_and_refresh (test_relay.DiscoveryTests.test_discovery_cache_and_refresh) ... ok
+test_explicit_host_bypasses_supervisor (test_relay.DiscoveryTests.test_explicit_host_bypasses_supervisor) ... ok
+test_missing_ambiguous_and_malformed_sources (test_relay.DiscoveryTests.test_missing_ambiguous_and_malformed_sources) ... ok
+test_read_only_default_role_endpoint_and_token_not_logged (test_relay.DiscoveryTests.test_read_only_default_role_endpoint_and_token_not_logged) ... ok
+test_redirect_refused (test_relay.DiscoveryTests.test_redirect_refused) ... ok
+test_standard_and_local_slugs (test_relay.DiscoveryTests.test_standard_and_local_slugs) ... ok
+test_connect_has_finite_send_timeout (test_relay.NetworkTests.test_connect_has_finite_send_timeout) ... ok
+test_real_tcp_forwarding_and_heartbeat (test_relay.NetworkTests.test_real_tcp_forwarding_and_heartbeat) ... ok
+test_real_tcp_source_and_upstream_reconnect_uuid_repeated (test_relay.NetworkTests.test_real_tcp_source_and_upstream_reconnect_uuid_repeated) ... AeroNexus disconnected; check UUID registration or duplicate use; retry in 0s
+Beast disconnected; retry in 0s
+AeroNexus disconnected; check UUID registration or duplicate use; retry in 0s
+ok
+test_restarting_with_changed_uuid_sends_new_identity (test_relay.NetworkTests.test_restarting_with_changed_uuid_sends_new_identity) ... Beast disconnected; retry in 0s
+Beast disconnected; retry in 0s
+ok
+test_all_mode_still_excludes_mlat (test_relay.ParserTests.test_all_mode_still_excludes_mlat) ... ok
+test_df17_df18_only (test_relay.ParserTests.test_df17_df18_only) ... ok
+test_drops_foreign_uuid_and_receiver_id (test_relay.ParserTests.test_drops_foreign_uuid_and_receiver_id) ... ok
+test_every_split_boundary_and_escaped_payload (test_relay.ParserTests.test_every_split_boundary_and_escaped_payload) ... ok
+test_garbage_does_not_grow_memory (test_relay.ParserTests.test_garbage_does_not_grow_memory) ... ok
+test_random_chunks_and_bytewise (test_relay.ParserTests.test_random_chunks_and_bytewise) ... ok
+test_recovers_from_truncated_adsb_and_unknown_type (test_relay.ParserTests.test_recovers_from_truncated_adsb_and_unknown_type) ... ok
+test_recovers_from_truncated_receiver_id (test_relay.ParserTests.test_recovers_from_truncated_receiver_id) ... ok
+test_uuid_is_exact_wire_format (test_relay.ParserTests.test_uuid_is_exact_wire_format) ... ok
+test_empty_uuid_allowed (test_relay.SettingsTests.test_empty_uuid_allowed) ... ok
+test_empty_uuid_process_stays_idle (test_relay.SettingsTests.test_empty_uuid_process_stays_idle) ... ok
+test_invalid_json_and_missing_file (test_relay.SettingsTests.test_invalid_json_and_missing_file) ... ok
+test_invalid_options (test_relay.SettingsTests.test_invalid_options) ... ok
+test_invalid_uuid_is_rejected_without_value_in_error (test_relay.SettingsTests.test_invalid_uuid_is_rejected_without_value_in_error) ... ok
+test_uuid_only_defaults (test_relay.SettingsTests.test_uuid_only_defaults) ... ok
+
+----------------------------------------------------------------------
+Ran 25 tests in 5.710s
+
+OK

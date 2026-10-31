@@ -1,0 +1,23 @@
+configuration:
+  uuid:
+    name: AeroNexus UUID
+    description: >-
+      Enter your issued 36-character AeroNexus UUID. Leave empty to wait without
+      network connections. Save and restart the app after changing it.
+  beast_host:
+    name: Beast source host (optional)
+    description: >-
+      Omit or leave empty to discover the installed ADS-B Multi-Portal Feeder.
+      Otherwise enter its internal host name or a receiver IP, without a port.
+      127.0.0.1 points to this AeroNexus app itself.
+  beast_port:
+    name: Beast output port (optional)
+    description: The receiver output port; defaults to 30005 when omitted.
+  filter:
+    name: Frame filter (optional)
+    description: >-
+      Defaults to adsb (DF17/18). all is for diagnosis. Both modes discard
+      frames marked with the MLAT timestamp.
+  stats_interval:
+    name: Statistics interval (optional)
+    description: Seconds between statistics logs; defaults to 60, range 30–3600.

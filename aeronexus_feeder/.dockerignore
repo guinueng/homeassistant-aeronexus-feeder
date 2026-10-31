@@ -1,0 +1,8 @@
+.git
+tests
+upstream
+__pycache__
+*.pyc
+*.md
+.editorconfig
+.gitattributes
