@@ -5,6 +5,32 @@
 
 [![Add app repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fguinueng%2Fhomeassistant-aeronexus-feeder)
 
+## 한눈에 보는 작동 방식
+
+```text
+GitHub 저장소 -> HA 설치/업데이트 -> 앱 이미지 빌드
+
+앱 시작: /init -> run -> manager.py
+  |
+  +-- UUID 없음 -> 네트워크 없이 대기
+  |
+  +-- UUID 있음 -> 설정과 저장된 버전 확인
+       |
+       +-- 최초 / 새 앱 버전 / 수동 갱신 요청
+       |    -> 공식 Python 다운로드·검사
+       |    -> 새 후보 선택 / 실패하면 기존 코드 유지
+       |
+       +-- 같은 버전의 일반 재시작
+            -> 저장된 코드 사용
+
+선택된 중계기의 자료 흐름:
+기존 ADS-B 피더 -- Beast TCP 30005 --> 중계기 -- TCP 30004 --> AeroNexus
+```
+
+새 Python 코드는 30초 실행 검사를 거쳐 적용하고, 조기 종료하면 이전 코드로 복구합니다.
+일반 재시작에서는 저장된 코드를 사용하며 실행 중 정기 업데이트 확인은 없습니다.
+설치·수동 갱신·복구·컨테이너 경로와 네트워크는 [TUI 로직 개략도](aeronexus_feeder/ARCHITECTURE.md)에서 자세히 볼 수 있습니다.
+
 ## 앱 버전과 관계없이 최신 중계기 받기
 
 1. 이 앱의 구성에서 **사용하지 않는 선택 옵션 표시**를 켭니다.
@@ -67,6 +93,7 @@ curl -fsSL https://raw.githubusercontent.com/guinueng/homeassistant-aeronexus-fe
 
 ## 안내
 
+- [TUI 로직 작동 개략도](aeronexus_feeder/ARCHITECTURE.md)
 - [한국어 설치·경로·업데이트 가이드](aeronexus_feeder/INSTALL_KO.md)
 - [자동 업데이트와 복구](aeronexus_feeder/UPDATING.md)
 - [검증 결과](aeronexus_feeder/VALIDATION.md)
