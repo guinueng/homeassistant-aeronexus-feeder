@@ -1,5 +1,5 @@
 FROM ghcr.io/home-assistant/base:3.24
-ARG BUILD_VERSION=1.1.1
+ARG BUILD_VERSION=1.1.2
 
 RUN apk add --no-cache python3 \
     && addgroup -S aeronexus \

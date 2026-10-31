@@ -5,6 +5,18 @@
 
 [![Add app repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fguinueng%2Fhomeassistant-aeronexus-feeder)
 
+## 앱 버전과 관계없이 최신 중계기 받기
+
+1. 이 앱의 구성에서 **사용하지 않는 선택 옵션 표시**를 켭니다.
+2. **다음 시작 시 최신 중계기 받기**를 켜고 저장합니다.
+3. 앱을 재시작합니다.
+
+공식 AeroNexus 최신 코드를 확인하고 검증 후 적용합니다. 새 HA 앱 버전 배포나
+Terminal/File editor 작업은 필요 없습니다. 성공하면 요청 옵션을 자동으로 끕니다.
+실패하면 현재 코드로 실행하고 옵션을 켜 둬서 다음 재시작 때 재시도할 수 있습니다.
+옵션 자동 해제에 실패했다는 로그가 나오면 구성에서 직접 꺼 주세요.
+주기 확인은 활성화하지 않습니다.
+
 ## 설치
 
 1. 위 버튼으로 저장소를 추가합니다.
@@ -21,7 +33,7 @@ https://github.com/guinueng/homeassistant-aeronexus-feeder
 
 버튼은 저장소 등록 화면을 엽니다. 앱 설치와 UUID 입력은 사용자 화면에서 마무리합니다.
 
-## 설치·업데이트 시 최신 중계기 확인 — 1.1.1
+## 설치·업데이트 시 최신 중계기 확인 — 1.1.2
 
 - **최초 실행과 새로운 앱 버전으로 업데이트한 뒤 첫 실행에만** 공식 `https://aeronexus.kr/feed.sh`를 확인합니다.
 - 확인 결과를 영구 저장하므로 같은 앱 버전의 재시작과 실행 중에는 다시 확인하지 않습니다.

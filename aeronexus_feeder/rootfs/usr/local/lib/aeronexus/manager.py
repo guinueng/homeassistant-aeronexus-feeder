@@ -15,6 +15,7 @@ import time
 from relay import ConfigError, DiscoveryError, Settings, SourceResolver
 from upstream import RUNNER, Candidate, UpdateError, VersionStore, child_environment, child_identity
 from app_version import APP_VERSION
+from refresh import clear_refresh_request
 
 LOG = logging.getLogger("aeronexus")
 PROBATION = 30.0
@@ -97,7 +98,7 @@ class Manager:
         self.worker = worker or Worker(settings)
         self.active = store.working()
         self.app_version = app_version
-        self.check_pending = store.state.get("checked_app_version") != app_version
+        self.check_pending = settings.refresh_upstream or store.state.get("checked_app_version") != app_version
         self.pending = None
         self.probation_until = None
         self.endpoint = None
@@ -122,6 +123,8 @@ class Manager:
                 LOG.info("New official relay downloaded and validated: %s", candidate.sha256[:12])
             self.store.state["checked_app_version"] = self.app_version
             self.store.save_state()
+            if self.settings.refresh_upstream:
+                clear_refresh_request()
         except (UpdateError, OSError) as exc:
             LOG.warning("Upstream update not applied: %s; keeping code=%s", exc, self.active.sha256[:12])
             LOG.info("No periodic retry; restart the app to retry this initial check")
@@ -178,6 +181,8 @@ class Manager:
 
     def run(self, stopped: threading.Event):
         LOG.info("Official upstream policy: check once per app version (%s), no periodic polling", self.app_version)
+        if self.settings.refresh_upstream:
+            LOG.info("Manual upstream refresh requested for this start")
         if not self.check_pending:
             LOG.info("Upstream already checked for this app version; using cached code=%s", self.active.sha256[:12])
         try:

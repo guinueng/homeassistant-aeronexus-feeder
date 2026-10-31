@@ -1,4 +1,4 @@
-# AeroNexus Feeder 1.1.1
+# AeroNexus Feeder 1.1.2
 
 Home Assistant OS에서 기존 ADS-B Multi-Portal Feeder의 Beast 30005 출력을 AeroNexus로 전달합니다.
 `amd64`, `aarch64`를 지원하고 기본 구성 화면에는 UUID만 표시합니다.
@@ -7,6 +7,18 @@ Home Assistant OS에서 기존 ADS-B Multi-Portal Feeder의 Beast 30005 출력�
 
 저장소 추가 → 앱 설치 → UUID 입력 → 저장 → 시작 순서입니다.
 [설치 가이드](INSTALL_KO.md), [자동 업데이트](UPDATING.md), [검증 결과](VALIDATION.md)를 참조하세요.
+
+## 앱 버전과 관계없이 최신 중계기 받기
+
+1. 이 앱의 구성에서 **사용하지 않는 선택 옵션 표시**를 켭니다.
+2. **다음 시작 시 최신 중계기 받기**를 켜고 저장합니다.
+3. 앱을 재시작합니다.
+
+공식 AeroNexus 최신 코드를 확인하고 검증 후 적용합니다. 새 HA 앱 버전 배포나
+Terminal/File editor 작업은 필요 없습니다. 성공하면 요청 옵션을 자동으로 끕니다.
+실패하면 현재 코드로 실행하고 옵션을 켜 둬서 다음 재시작 때 재시도할 수 있습니다.
+옵션 자동 해제에 실패했다는 로그가 나오면 구성에서 직접 꺼 주세요.
+주기 확인은 활성화하지 않습니다.
 
 ## 설치·업데이트 시 최신 코드 확인
 
@@ -28,7 +40,7 @@ Home Assistant OS에서 기존 ADS-B Multi-Portal Feeder의 Beast 30005 출력�
 | `tests/` | 전송 및 자동 업데이트/복구 검사 |
 
 `host_network: false`로 내부 30005를 읽습니다. 호스트 포트 공개나 SDR 접근은 필요 없습니다.
-Supervisor API는 `hassio_api: true`, `hassio_role: default`의 정보 읽기만 사용합니다.
+Supervisor API는 default role의 탐색 정보 읽기와 자기 앱의 갱신 요청 옵션 해제에 사용합니다.
 
 ```sh
 python3 -B -m unittest discover -s tests -v

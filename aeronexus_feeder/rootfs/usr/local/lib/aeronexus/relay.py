@@ -54,6 +54,7 @@ class Settings:
     filter: str = "adsb"
     stats_interval: int = 60
     update_interval: int = 3600  # Legacy 1.1.0 option; ignored by the manager.
+    refresh_upstream: bool = False
 
     @classmethod
     def load(cls, path: Path) -> Settings:
@@ -63,7 +64,7 @@ class Settings:
             raise ConfigError("Cannot read valid options JSON; save Configuration and restart.") from None
         if not isinstance(data, dict):
             raise ConfigError("Options must be a JSON object.")
-        unknown = set(data) - {"uuid", "beast_host", "beast_port", "filter", "stats_interval", "update_interval"}
+        unknown = set(data) - {"uuid", "beast_host", "beast_port", "filter", "stats_interval", "update_interval", "refresh_upstream"}
         if unknown:
             raise ConfigError("Unknown option keys; compare with the app schema.")
         u = data.get("uuid", "")
@@ -82,6 +83,9 @@ class Settings:
         port = data.get("beast_port", 30005)
         interval = data.get("stats_interval", 60)
         update_interval = data.get("update_interval", 3600)
+        refresh = data.get("refresh_upstream", False)
+        if type(refresh) is not bool:
+            raise ConfigError("refresh_upstream must be true or false.")
         if type(port) is not int or not 1 <= port <= 65535:
             raise ConfigError("beast_port must be between 1 and 65535.")
         if type(interval) is not int or not 30 <= interval <= 3600:
@@ -91,7 +95,7 @@ class Settings:
         mode = data.get("filter", "adsb")
         if mode not in ("adsb", "all"):
             raise ConfigError("filter must be adsb or all.")
-        return cls(u.lower(), host, port, mode, interval, update_interval)
+        return cls(u.lower(), host, port, mode, interval, update_interval, refresh)
 
 
 class NoRedirect(HTTPRedirectHandler):

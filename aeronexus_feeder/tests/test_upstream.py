@@ -20,6 +20,7 @@ sys.path.insert(0, str(LIB))
 import manager
 import relay
 import upstream
+import refresh
 from test_relay import UUID, exact, frame, listener
 
 ORIGINAL = (APP / "upstream/feed_relay.original.py.txt").read_bytes()
@@ -142,6 +143,14 @@ class UpstreamTests(unittest.TestCase):
             path.write_text(json.dumps({"uuid": UUID, "update_interval": 10}))
             with self.assertRaises(relay.ConfigError): relay.Settings.load(path)
 
+    def test_refresh_option_requires_a_boolean(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "options.json"
+            path.write_text(json.dumps({"uuid": UUID, "refresh_upstream": True}))
+            self.assertTrue(relay.Settings.load(path).refresh_upstream)
+            path.write_text(json.dumps({"uuid": UUID, "refresh_upstream": "true"}))
+            with self.assertRaises(relay.ConfigError): relay.Settings.load(path)
+
 
 class FakeWorker:
     def __init__(self): self.running, self.started = False, []
@@ -251,6 +260,65 @@ class ManagerTests(unittest.TestCase):
             with patch.object(restored, "check", side_effect=AssertionError("must not poll")):
                 restarted.tick(time.monotonic())
             self.assertEqual(worker.started[-1], newer.release_id)
+
+    def test_manual_refresh_checks_even_when_app_version_is_already_checked(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app, _, store = self.setup_manager(directory)
+            with patch.object(store, "check", return_value=app.active):
+                app.tick(time.monotonic())
+            requested = manager.Manager(replace(relay.Settings(UUID), refresh_upstream=True), store, Resolver(), FakeWorker())
+            with patch.object(store, "check", return_value=requested.active) as check, patch.object(manager, "clear_refresh_request", return_value=True) as acknowledge:
+                requested.tick(time.monotonic())
+                requested.tick(time.monotonic() + 86401)
+            self.assertEqual(check.call_count, 1)
+            acknowledge.assert_called_once_with()
+
+    def test_failed_manual_check_leaves_request_for_retry(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app, _, store = self.setup_manager(directory)
+            requested = manager.Manager(replace(relay.Settings(UUID), refresh_upstream=True), store, Resolver(), FakeWorker())
+            with patch.object(store, "check", side_effect=upstream.UpdateError("offline")), patch.object(manager, "clear_refresh_request") as acknowledge:
+                requested.tick(time.monotonic())
+            acknowledge.assert_not_called()
+
+
+class RefreshOptionTests(unittest.TestCase):
+    def test_reset_preserves_all_options_and_secret_references(self):
+        options = {"uuid": "!secret aero_uuid", "beast_host": "my-receiver", "refresh_upstream": True}
+        response = lambda data: Response(json.dumps({"result": "ok", "data": data}).encode())
+        with patch.dict(os.environ, {"SUPERVISOR_TOKEN": "test-token"}), patch.object(refresh, "build_opener") as build:
+            build.return_value.open.side_effect = [response({"options": options}), response({})]
+            self.assertTrue(refresh.clear_refresh_request())
+            get, post = [call.args[0] for call in build.return_value.open.call_args_list]
+        self.assertEqual(get.full_url, "http://supervisor/addons/self/info")
+        self.assertEqual(post.full_url, "http://supervisor/addons/self/options")
+        self.assertEqual(post.get_method(), "POST")
+        payload = json.loads(post.data)
+        self.assertEqual(payload, {"options": {**options, "refresh_upstream": False}})
+
+    def test_does_not_overwrite_when_user_has_already_cleared_flag(self):
+        data = {"result": "ok", "data": {"options": {"uuid": UUID, "refresh_upstream": False}}}
+        with patch.dict(os.environ, {"SUPERVISOR_TOKEN": "test-token"}), patch.object(refresh, "build_opener") as build:
+            build.return_value.open.return_value = Response(json.dumps(data).encode())
+            self.assertTrue(refresh.clear_refresh_request())
+            self.assertEqual(build.return_value.open.call_count, 1)
+
+    def test_missing_token_does_not_call_api(self):
+        with patch.dict(os.environ, {}, clear=True), patch.object(refresh, "build_opener") as build:
+            self.assertFalse(refresh.clear_refresh_request())
+            build.assert_not_called()
+
+    def test_api_failure_keeps_current_options_and_does_not_log_secrets(self):
+        with patch.dict(os.environ, {"SUPERVISOR_TOKEN": "private-token"}), patch.object(refresh, "build_opener") as build:
+            build.return_value.open.side_effect = URLError("private-token")
+            with self.assertLogs("aeronexus", level="WARNING") as logs:
+                self.assertFalse(refresh.clear_refresh_request())
+            self.assertNotIn("private-token", "\n".join(logs.output))
+
+    def test_redirect_failure_is_handled_without_crashing_worker_manager(self):
+        with patch.dict(os.environ, {"SUPERVISOR_TOKEN": "test-token"}), patch.object(refresh, "build_opener") as build:
+            build.return_value.open.side_effect = relay.DiscoveryError("redirect")
+            self.assertFalse(refresh.clear_refresh_request())
 
 
 class OfficialWorkerTests(unittest.TestCase):

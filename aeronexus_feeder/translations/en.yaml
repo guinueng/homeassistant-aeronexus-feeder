@@ -21,6 +21,12 @@ configuration:
   stats_interval:
     name: Statistics interval (optional)
     description: Seconds between statistics logs; defaults to 60, range 30–3600.
+  refresh_upstream:
+    name: Fetch latest relay on next start
+    description: >-
+      Turn on, save and restart to fetch and validate the official latest relay
+      without a new app release. Automatically turns off after a successful
+      check. Does not enable periodic polling.
   update_interval:
     name: Legacy update interval (unused)
     description: >-

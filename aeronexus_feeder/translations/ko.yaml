@@ -21,6 +21,11 @@ configuration:
   stats_interval:
     name: 통계 로그 간격 (선택)
     description: 초 단위입니다. 생략하면 60초, 설정 범위는 30~3600초입니다.
+  refresh_upstream:
+    name: 다음 시작 시 최신 중계기 받기
+    description: >-
+      켜고 저장한 뒤 앱을 재시작하면 앱 버전을 바꾸지 않아도 AeroNexus 공식 최신 코드를
+      확인하고 검증 후 적용합니다. 확인 성공 시 자동으로 꺼집니다. 주기 확인은 하지 않습니다.
   update_interval:
     name: 이전 버전의 확인 간격 (사용하지 않음)
     description: >-
