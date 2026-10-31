@@ -1,4 +1,4 @@
-1.1.0 | Linux container | Python 3.14 | 43 offline regression tests
+1.1.1 | Linux container | 48 offline tests
 
 test_discovery_cache_and_refresh (test_relay.DiscoveryTests.test_discovery_cache_and_refresh) ... ok
 test_explicit_host_bypasses_supervisor (test_relay.DiscoveryTests.test_explicit_host_bypasses_supervisor) ... ok
@@ -11,12 +11,12 @@ test_real_tcp_forwarding_and_heartbeat (test_relay.NetworkTests.test_real_tcp_fo
 ok
 test_real_tcp_source_and_upstream_reconnect_uuid_repeated (test_relay.NetworkTests.test_real_tcp_source_and_upstream_reconnect_uuid_repeated) ... AeroNexus disconnected; check UUID registration or duplicate use; retry in 0s
 Beast disconnected; retry in 0s
+Beast disconnected; retry in 0s
 AeroNexus disconnected; check UUID registration or duplicate use; retry in 0s
 ok
 test_restarting_with_changed_uuid_sends_new_identity (test_relay.NetworkTests.test_restarting_with_changed_uuid_sends_new_identity) ... Beast disconnected; retry in 0s
 AeroNexus disconnected; check UUID registration or duplicate use; retry in 0s
 Beast disconnected; retry in 0s
-AeroNexus disconnected; check UUID registration or duplicate use; retry in 0s
 ok
 test_all_mode_still_excludes_mlat (test_relay.ParserTests.test_all_mode_still_excludes_mlat) ... ok
 test_df17_df18_only (test_relay.ParserTests.test_df17_df18_only) ... ok
@@ -34,10 +34,16 @@ test_invalid_options (test_relay.SettingsTests.test_invalid_options) ... ok
 test_invalid_uuid_is_rejected_without_value_in_error (test_relay.SettingsTests.test_invalid_uuid_is_rejected_without_value_in_error) ... ok
 test_uuid_only_defaults (test_relay.SettingsTests.test_uuid_only_defaults) ... ok
 test_checked_update_starts_then_commits_after_probation (test_upstream.ManagerTests.test_checked_update_starts_then_commits_after_probation) ... ok
+test_failed_initial_check_only_retries_after_restart (test_upstream.ManagerTests.test_failed_initial_check_only_retries_after_restart) ... Upstream update not applied: offline; keeping code=f8fafdaa694c
+ok
+test_new_app_version_checks_once_again (test_upstream.ManagerTests.test_new_app_version_checks_once_again) ... ok
 test_new_worker_crash_rolls_back_and_is_not_committed (test_upstream.ManagerTests.test_new_worker_crash_rolls_back_and_is_not_committed) ... New relay exited during its 30-second startup check; rolling back to f8fafdaa694c
 ok
+test_no_second_check_after_hours_of_runtime (test_upstream.ManagerTests.test_no_second_check_after_hours_of_runtime) ... ok
+test_normal_restart_uses_cache_without_http_check (test_upstream.ManagerTests.test_normal_restart_uses_cache_without_http_check) ... ok
 test_offline_check_still_starts_existing_worker (test_upstream.ManagerTests.test_offline_check_still_starts_existing_worker) ... Upstream update not applied: offline; keeping code=f8fafdaa694c
 ok
+test_restart_during_probation_resumes_cached_candidate_without_http (test_upstream.ManagerTests.test_restart_during_probation_resumes_cached_candidate_without_http) ... ok
 test_full_official_relay_forwards_uuid_adsb_and_excludes_mlat (test_upstream.OfficialWorkerTests.test_full_official_relay_forwards_uuid_adsb_and_excludes_mlat) ... ok
 test_bad_uuid_and_mlat_protocol_rejected (test_upstream.UpstreamTests.test_bad_uuid_and_mlat_protocol_rejected) ... ok
 test_broken_main_is_rejected_even_when_parser_passes (test_upstream.UpstreamTests.test_broken_main_is_rejected_even_when_parser_passes) ... ok
@@ -55,6 +61,6 @@ test_redirect_only_allows_same_https_origin (test_upstream.UpstreamTests.test_re
 test_update_interval_options (test_upstream.UpstreamTests.test_update_interval_options) ... ok
 
 ----------------------------------------------------------------------
-Ran 43 tests in 9.536s
+Ran 48 tests in 10.615s
 
 OK

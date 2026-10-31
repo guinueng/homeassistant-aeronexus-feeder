@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HA lifecycle/configuration adapter with official relay auto-updates."""
+"""Check upstream once per installed app version, then run the pinned relay."""
 from __future__ import annotations
 
 import argparse
@@ -14,6 +14,7 @@ import time
 
 from relay import ConfigError, DiscoveryError, Settings, SourceResolver
 from upstream import RUNNER, Candidate, UpdateError, VersionStore, child_environment, child_identity
+from app_version import APP_VERSION
 
 LOG = logging.getLogger("aeronexus")
 PROBATION = 30.0
@@ -89,31 +90,46 @@ class Worker:
 
 
 class Manager:
-    def __init__(self, settings: Settings, store: VersionStore, resolver=None, worker=None):
+    def __init__(self, settings: Settings, store: VersionStore, resolver=None, worker=None,
+                 app_version=APP_VERSION):
         self.settings, self.store = settings, store
         self.resolver = resolver or SourceResolver(settings)
         self.worker = worker or Worker(settings)
         self.active = store.working()
+        self.app_version = app_version
+        self.check_pending = store.state.get("checked_app_version") != app_version
         self.pending = None
         self.probation_until = None
         self.endpoint = None
-        self.next_check = self.next_resolve = self.next_start = 0.0
+        self.next_resolve = self.next_start = 0.0
         self.restart_delay = 2.0
+        if self.check_pending:
+            # A new HA adapter may be compatible with a previously rejected relay.
+            store.state.pop("rejected", None)
+        else:
+            latest = store.state.get("latest")
+            if latest != self.active.release_id and latest != store.state.get("rejected"):
+                self.pending = store.load(latest)
 
     def check(self):
         try:
             candidate = self.store.check()
             if candidate and candidate.release_id != self.active.release_id:
+                self.store.save(candidate)
+                self.store.state["latest"] = candidate.release_id
                 self.pending = candidate
                 self.probation_until = None
                 LOG.info("New official relay downloaded and validated: %s", candidate.sha256[:12])
+            self.store.state["checked_app_version"] = self.app_version
+            self.store.save_state()
         except (UpdateError, OSError) as exc:
             LOG.warning("Upstream update not applied: %s; keeping code=%s", exc, self.active.sha256[:12])
+            LOG.info("No periodic retry; restart the app to retry this initial check")
 
     def tick(self, now: float):
-        if now >= self.next_check:
+        if self.check_pending:
+            self.check_pending = False
             self.check()
-            self.next_check = time.monotonic() + self.settings.update_interval
         if now >= self.next_resolve:
             try:
                 endpoint = self.resolver.resolve()
@@ -161,7 +177,9 @@ class Manager:
             self.restart_delay = min(self.restart_delay * 2, 60.0)
 
     def run(self, stopped: threading.Event):
-        LOG.info("Automatic official upstream check: at startup and every %ds", self.settings.update_interval)
+        LOG.info("Official upstream policy: check once per app version (%s), no periodic polling", self.app_version)
+        if not self.check_pending:
+            LOG.info("Upstream already checked for this app version; using cached code=%s", self.active.sha256[:12])
         try:
             while not stopped.is_set():
                 self.tick(time.monotonic())

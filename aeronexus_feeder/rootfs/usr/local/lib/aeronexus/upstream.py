@@ -17,6 +17,7 @@ import subprocess
 import sys
 from urllib.error import HTTPError
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
+from app_version import APP_VERSION
 
 LOG = logging.getLogger("aeronexus")
 SOURCE_URL = "https://aeronexus.kr/feed.sh"
@@ -198,7 +199,7 @@ class VersionStore:
         self.save_state()
 
     def check(self) -> Candidate | None:
-        headers = {"User-Agent": "AeroNexus-HA/1.1.0", "Accept": "text/plain"}
+        headers = {"User-Agent": f"AeroNexus-HA/{APP_VERSION}", "Accept": "text/plain"}
         # Conditional GET is only used when a validated cached version exists.
         cached_latest = self.state.get("latest") or self.state.get("active")
         if cached_latest and self.load(cached_latest):

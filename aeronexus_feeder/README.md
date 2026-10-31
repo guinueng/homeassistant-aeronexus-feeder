@@ -1,4 +1,4 @@
-# AeroNexus Feeder 1.1.0
+# AeroNexus Feeder 1.1.1
 
 Home Assistant OS에서 기존 ADS-B Multi-Portal Feeder의 Beast 30005 출력을 AeroNexus로 전달합니다.
 `amd64`, `aarch64`를 지원하고 기본 구성 화면에는 UUID만 표시합니다.
@@ -8,9 +8,10 @@ Home Assistant OS에서 기존 ADS-B Multi-Portal Feeder의 Beast 30005 출력�
 저장소 추가 → 앱 설치 → UUID 입력 → 저장 → 시작 순서입니다.
 [설치 가이드](INSTALL_KO.md), [자동 업데이트](UPDATING.md), [검증 결과](VALIDATION.md)를 참조하세요.
 
-## 자동 업데이트
+## 설치·업데이트 시 최신 코드 확인
 
-시작 시와 기본 1시간마다 공식 feed.sh를 확인합니다. 변경된 Python 중계기 전체를 추출하고
+최초 실행과 새 앱 버전의 첫 실행에만 공식 feed.sh를 확인합니다. 같은 앱 버전으로
+재시작하거나 실행 중일 때는 확인하지 않습니다. 변경된 Python 중계기 전체를 추출하고
 호환성 검사 후 자동 적용합니다. 실패하면 마지막 정상 코드 또는 이미지의 초기 코드로 동작합니다.
 원본 shell/systemd 설치기는 실행하지 않습니다.
 

@@ -53,7 +53,7 @@ class Settings:
     beast_port: int = 30005
     filter: str = "adsb"
     stats_interval: int = 60
-    update_interval: int = 3600
+    update_interval: int = 3600  # Legacy 1.1.0 option; ignored by the manager.
 
     @classmethod
     def load(cls, path: Path) -> Settings:

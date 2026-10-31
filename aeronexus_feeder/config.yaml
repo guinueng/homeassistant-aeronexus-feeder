@@ -1,5 +1,5 @@
 name: "AeroNexus Feeder"
-version: "1.1.0"
+version: "1.1.1"
 slug: "aeronexus_feeder"
 description: "Forward the existing ADS-B Multi-Portal Feeder Beast stream to AeroNexus"
 url: "https://github.com/guinueng/homeassistant-aeronexus-feeder"
@@ -24,4 +24,5 @@ schema:
   beast_port: "port?"
   filter: "list(adsb|all)?"
   stats_interval: "int(30,3600)?"
+  # Retained only to accept options saved by 1.1.0. No periodic update check.
   update_interval: "int(300,86400)?"

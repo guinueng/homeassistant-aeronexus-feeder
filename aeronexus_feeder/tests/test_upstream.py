@@ -196,6 +196,62 @@ class ManagerTests(unittest.TestCase):
                 app.tick(time.monotonic())
             self.assertTrue(worker.alive())
 
+    def test_no_second_check_after_hours_of_runtime(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app, worker, store = self.setup_manager(directory)
+            now = time.monotonic()
+            with patch.object(store, "check", return_value=app.active) as check:
+                app.tick(now)
+                app.tick(now + 3601)
+                app.tick(now + 86401)
+            self.assertEqual(check.call_count, 1)
+
+    def test_normal_restart_uses_cache_without_http_check(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app, _, store = self.setup_manager(directory)
+            with patch.object(store, "check", return_value=app.active):
+                app.tick(time.monotonic())
+            restored = upstream.VersionStore(Path(directory))
+            restarted = manager.Manager(relay.Settings(UUID), restored, Resolver(), FakeWorker())
+            with patch.object(restored, "check", side_effect=AssertionError("must not poll")):
+                restarted.tick(time.monotonic())
+            self.assertFalse(restarted.check_pending)
+
+    def test_new_app_version_checks_once_again(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app, _, store = self.setup_manager(directory)
+            with patch.object(store, "check", return_value=app.active):
+                app.tick(time.monotonic())
+            upgraded = manager.Manager(relay.Settings(UUID), store, Resolver(), FakeWorker(), app_version="future")
+            with patch.object(store, "check", return_value=upgraded.active) as check:
+                upgraded.tick(time.monotonic())
+                upgraded.tick(time.monotonic() + 3601)
+            self.assertEqual(check.call_count, 1)
+            self.assertEqual(store.state["checked_app_version"], "future")
+
+    def test_failed_initial_check_only_retries_after_restart(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app, _, store = self.setup_manager(directory)
+            with patch.object(store, "check", side_effect=upstream.UpdateError("offline")) as check:
+                app.tick(time.monotonic())
+                app.tick(time.monotonic() + 86401)
+            self.assertEqual(check.call_count, 1)
+            restarted = manager.Manager(relay.Settings(UUID), store, Resolver(), FakeWorker())
+            self.assertTrue(restarted.check_pending)
+
+    def test_restart_during_probation_resumes_cached_candidate_without_http(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app, _, store = self.setup_manager(directory)
+            newer = upstream.identify(ORIGINAL + b"\n# downloaded candidate\n")
+            with patch.object(store, "check", return_value=newer):
+                app.tick(time.monotonic())
+            restored = upstream.VersionStore(Path(directory))
+            worker = FakeWorker()
+            restarted = manager.Manager(relay.Settings(UUID), restored, Resolver(), worker)
+            with patch.object(restored, "check", side_effect=AssertionError("must not poll")):
+                restarted.tick(time.monotonic())
+            self.assertEqual(worker.started[-1], newer.release_id)
+
 
 class OfficialWorkerTests(unittest.TestCase):
     def test_full_official_relay_forwards_uuid_adsb_and_excludes_mlat(self):
