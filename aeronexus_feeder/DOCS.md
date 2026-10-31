@@ -1,5 +1,9 @@
 # AeroNexus Feeder 사용법
 
+[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/guinueng/homeassistant-aeronexus-feeder)
+
+[GitHub 저장소 열기](https://github.com/guinueng/homeassistant-aeronexus-feeder) — 소스 코드·설치 파일·변경 사항을 확인할 수 있습니다.
+
 기존 ADS-B Multi-Portal Feeder를 실행하고, 이 앱의 구성에서 UUID 입력 → 저장 → 시작하세요.
 빈 UUID는 네트워크 연결 없이 대기합니다. 구성 변경은 재시작해야 적용됩니다.
 부팅 시 시작과 Watchdog을 켜세요.

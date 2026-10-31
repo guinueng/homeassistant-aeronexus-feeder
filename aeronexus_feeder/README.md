@@ -4,6 +4,9 @@ Home Assistant OS에서 기존 ADS-B Multi-Portal Feeder의 Beast 30005 출력�
 `amd64`, `aarch64`를 지원하고 기본 구성 화면에는 UUID만 표시합니다.
 
 [![Add app repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fguinueng%2Fhomeassistant-aeronexus-feeder)
+[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/guinueng/homeassistant-aeronexus-feeder)
+
+[GitHub 저장소 열기](https://github.com/guinueng/homeassistant-aeronexus-feeder) — 소스 코드·설치 파일·변경 사항을 확인할 수 있습니다.
 
 저장소 추가 → 앱 설치 → UUID 입력 → 저장 → 시작 순서입니다.
 [TUI 로직 개략도](ARCHITECTURE.md), [설치 가이드](INSTALL_KO.md), [자동 업데이트](UPDATING.md), [검증 결과](VALIDATION.md)를 참조하세요.
