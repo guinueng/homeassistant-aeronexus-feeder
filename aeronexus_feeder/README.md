@@ -1,5 +1,7 @@
 # AeroNexus Feeder 1.1.2
 
+> **비공식 앱 (Unofficial)**: AeroNexus 운영자가 제공하는 공식 Home Assistant 앱이 아닙니다.
+
 Home Assistant OS에서 기존 ADS-B Multi-Portal Feeder의 Beast 30005 출력을 AeroNexus로 전달합니다.
 `amd64`, `aarch64`를 지원하고 기본 구성 화면에는 UUID만 표시합니다.
 
