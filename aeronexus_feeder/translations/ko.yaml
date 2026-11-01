@@ -3,6 +3,8 @@ configuration:
     name: AeroNexus UUID
     description: >-
       AeroNexus에서 발급받은 36자 UUID를 입력하세요. 비워 두면 연결 없이 대기합니다.
+      UUID 하나는 기기 하나에서만 사용하세요. 같은 UUID로 나중에 접속한 쪽은 서버가 끊습니다.
+      라즈베리파이에서 이전할 때는 파이의 AeroNexus 피더를 먼저 제거하세요(기존 설치 명령 끝에 --uninstall).
       입력 후 저장하고 앱을 재시작하세요.
   beast_host:
     name: Beast 수신기 주소 (선택)

@@ -3,7 +3,9 @@ configuration:
     name: AeroNexus UUID
     description: >-
       Enter your issued 36-character AeroNexus UUID. Leave empty to wait without
-      network connections. Save and restart the app after changing it.
+      network connections. Use one UUID on one device only; the server disconnects the newer connection
+      when a UUID is already in use. Before migrating from a Raspberry Pi, uninstall its AeroNexus feeder
+      by adding --uninstall to the original installation command on that Pi. Save and restart after changes.
   beast_host:
     name: Beast source host (optional)
     description: >-

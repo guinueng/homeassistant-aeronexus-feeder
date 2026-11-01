@@ -1,4 +1,4 @@
-# 로직 작동 개략도 — AeroNexus Feeder 1.1.2
+# 로직 작동 개략도 — AeroNexus Feeder 1.1.3
 
 현재 구현 기준의 TUI 개략도입니다. **앱 설치**, **공식 중계기 확인**, **실제 ADS-B 전송**은 아래처럼 이어집니다.
 
@@ -158,5 +158,26 @@ UUID·다른 선택 설정·`!secret` 참조는 보존합니다. API 해제가 �
 `host_network: false`이며 Supervisor 내부 네트워크로 기존 피더에 접속합니다.
 부팅 시 시작과 Watchdog은 HA 앱 정보 화면에서 켭니다. 실행 로그에는 코드 SHA와 연결·통계가 표시되며 UUID는 숨깁니다.
 Beast 주소 재탐색과 연결 재시도는 중계를 유지하는 동작이며 공식 코드의 정기 업데이트 확인이 아닙니다.
+
+## 5. 접속 직후 서버가 끊으면?
+
+```text
+[Official Python relay -> connect to AeroNexus]
+                      |
+                      v
+[HA runner observes the destination socket]
+                      |
+                      +-- EOF / reset / broken pipe within 10 seconds
+                      |     -> UUID conflict possibility -> WARNING log
+                      |     -> At most one extra notice per 60 seconds
+                      |
+                      +-- Source close / timeout / local close / later close
+                            -> Original log only
+
+Official Python source / wire bytes / reconnect loop: unchanged
+```
+
+경고는 중복 UUID의 가능성입니다. 이전 기기의 AeroNexus 피더를 먼저 제거하고 UUID 등록/활성화 상태도 확인하세요.
+UUID 하나를 두 기기에서 쓰면 서버가 나중에 접속한 쪽을 끊습니다.
 
 관련 문서: [설치·파일 편집·경로](INSTALL_KO.md), [업데이트·복구 상세](UPDATING.md), [검증 범위](VALIDATION.md).

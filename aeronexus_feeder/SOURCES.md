@@ -37,3 +37,11 @@ AeroNexus 프로토콜 출처는 사용자가 업로드한 스크립트입니다
 - [공식 최신 feed.sh](https://aeronexus.kr/feed.sh): HTTPS 실다운로드 및 현재 원본 비교.
 - [GitHub 공개 범위 설정](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/managing-repository-settings/setting-repository-visibility): Public 전환 절차.
 - 원본 배포 허락은 사용자가 받았다고 확인했습니다.
+
+## 1.1.3 운영팀 피드백 반영 — 2026-11-01
+
+- 사용자가 전달한 AeroNexus 운영팀 댓글을 근거로 비공식 안내 유지, UUID 하나당 기기 하나,
+  중복 접속 시 나중에 접속한 쪽 종료, 이전 파이에서 --uninstall 실행 절차를 반영했습니다.
+- [공식 피더 FAQ](https://aeronexus.kr/feeder-faq.html) 주소와 제거 명령 형식은 제공된 원본 feed.sh에도 포함되어 있습니다.
+- 공식 Python의 소스와 전송 바이트는 유지하고 HA 실행부에서 연결 직후 종료의 가능성 경고만 추가했습니다.
+- 서버의 UUID 중복 판정을 조회하는 API는 추가하지 않았습니다. 경고는 접속 종료 시점을 바탕으로 한 가능성 안내입니다.

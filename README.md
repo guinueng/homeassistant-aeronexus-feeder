@@ -8,6 +8,16 @@
 [![Add app repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fguinueng%2Fhomeassistant-aeronexus-feeder)
 [![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/guinueng/homeassistant-aeronexus-feeder)
 
+## UUID 하나는 기기 하나에서만 사용하세요
+
+같은 UUID로 두 곳에서 접속하면 서버가 **나중에 접속한 쪽을 끊습니다**.
+라즈베리파이에서 HA로 옮길 때는 이전 파이의 AeroNexus 피더를 먼저 제거한 뒤 이 앱을 시작하세요.
+기존 설치 명령 끝에 `--uninstall`을 붙이면 됩니다.
+[이전 절차](aeronexus_feeder/INSTALL_KO.md#uuid를-다른-기기로-이전할-때)와 [공식 피더 FAQ](https://aeronexus.kr/feeder-faq.html)를 참조하세요.
+
+서버가 연결 직후 끊으면 로그에 **「UUID가 다른 곳에서 사용 중일 수 있습니다」**를 경고로 표시합니다.
+중복 사용 확정은 아니므로 UUID 등록/활성화 상태와 네트워크도 함께 확인하세요.
+
 ## 한눈에 보는 작동 방식
 
 ```text
@@ -62,7 +72,7 @@ https://github.com/guinueng/homeassistant-aeronexus-feeder
 
 버튼은 저장소 등록 화면을 엽니다. 앱 설치와 UUID 입력은 사용자 화면에서 마무리합니다.
 
-## 설치·업데이트 시 최신 중계기 확인 — 1.1.2
+## 설치·업데이트 시 최신 중계기 확인 — 1.1.3
 
 - **최초 실행과 새로운 앱 버전으로 업데이트한 뒤 첫 실행에만** 공식 `https://aeronexus.kr/feed.sh`를 확인합니다.
 - 확인 결과를 영구 저장하므로 같은 앱 버전의 재시작과 실행 중에는 다시 확인하지 않습니다.

@@ -5,8 +5,89 @@ import os
 import socket
 import sys
 import threading
+import time
 
 MAX_CODE = 512 * 1024
+UUID_WARNING_PREFIX = "[HA UUID warning] "
+EARLY_DISCONNECT_S = 10.0
+UUID_WARNING_COOLDOWN_S = 60.0
+UUID_IN_USE_HINT = (
+    "UUID가 다른 곳에서 사용 중일 수 있습니다. UUID 하나는 기기 하나에서만 사용하세요. "
+    "라즈베리파이에서 HA로 옮겼다면 파이 쪽 AeroNexus 피더를 먼저 제거하세요 "
+    "(기존 설치 명령 끝에 --uninstall). UUID 등록/활성화 상태와 네트워크도 확인하세요. "
+    "https://aeronexus.kr/feeder-faq.html"
+)
+
+
+class DisconnectHints:
+    """Observe early remote closes without changing official relay source or traffic."""
+    def __init__(self, log, clock=None):
+        self.log = log
+        self.clock = clock or time.monotonic
+        self.last_notice = None
+
+    def report(self, connected_at):
+        now = self.clock()
+        if not 0 <= now - connected_at <= EARLY_DISCONNECT_S:
+            return
+        if self.last_notice is not None and now - self.last_notice < UUID_WARNING_COOLDOWN_S:
+            return
+        self.last_notice = now
+        try:
+            self.log(UUID_WARNING_PREFIX + UUID_IN_USE_HINT)
+        except Exception:
+            # Diagnostics must not change socket results or the relay's reconnect loop.
+            pass
+
+
+class ObservedFeedSocket:
+    """Pass socket operations through; report remote EOF/reset during initial setup."""
+    def __init__(self, sock, hints):
+        self.sock = sock
+        self.hints = hints
+        self.connected_at = hints.clock()
+        self.closed = False
+        self.reported = False
+
+    def __getattr__(self, name):
+        return getattr(self.sock, name)
+
+    def remote_closed(self):
+        if not self.closed and not self.reported:
+            self.reported = True
+            self.hints.report(self.connected_at)
+
+    def recv(self, *args, **kwargs):
+        try:
+            data = self.sock.recv(*args, **kwargs)
+        except (ConnectionResetError, ConnectionAbortedError):
+            self.remote_closed()
+            raise
+        if data == b"":
+            self.remote_closed()
+        return data
+
+    def sendall(self, *args, **kwargs):
+        try:
+            return self.sock.sendall(*args, **kwargs)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            self.remote_closed()
+            raise
+
+    def close(self):
+        self.closed = True
+        return self.sock.close()
+
+
+def runtime_connect(connect, feed_host, feed_port, hints):
+    """Keep the existing timeout policy; observe only the AeroNexus destination."""
+    def bounded_connect(host, port, *args, **kwargs):
+        sock = connect(host, port, *args, **kwargs)
+        sock.settimeout(5.0)
+        if (host, port) == (feed_host, feed_port):
+            return ObservedFeedSocket(sock, hints)
+        return sock
+    return bounded_connect
 
 
 def limits():
@@ -115,11 +196,9 @@ def main():
         namespace["STAT_S"] = float(os.environ.get("AERO_STAT_S", "60"))
         original_connect = namespace.get("connect")
         if callable(original_connect):
-            def bounded_connect(*args, **kwargs):
-                sock = original_connect(*args, **kwargs)
-                sock.settimeout(5.0)
-                return sock
-            namespace["connect"] = bounded_connect
+            hints = DisconnectHints(namespace["log"])
+            namespace["connect"] = runtime_connect(
+                original_connect, namespace["FEED_HOST"], namespace["FEED_PORT"], hints)
         sys.exit(namespace["main"]())
 
 

@@ -16,6 +16,7 @@ from relay import ConfigError, DiscoveryError, Settings, SourceResolver
 from upstream import RUNNER, Candidate, UpdateError, VersionStore, child_environment, child_identity
 from app_version import APP_VERSION
 from refresh import clear_refresh_request
+from engine_runner import UUID_WARNING_PREFIX
 
 LOG = logging.getLogger("aeronexus")
 PROBATION = 30.0
@@ -45,7 +46,10 @@ class Worker:
                               self.settings.uuid[:8], self.settings.uuid[:8].upper()):
                     if value:
                         text = text.replace(value, "[UUID hidden]")
-                LOG.info("upstream: %s", text)
+                if text.startswith(UUID_WARNING_PREFIX):
+                    LOG.warning("upstream: %s", text[len(UUID_WARNING_PREFIX):])
+                else:
+                    LOG.info("upstream: %s", text)
 
         self.reader = threading.Thread(target=forward_logs, daemon=True)
         self.reader.start()

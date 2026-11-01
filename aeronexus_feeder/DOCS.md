@@ -10,6 +10,18 @@
 빈 UUID는 네트워크 연결 없이 대기합니다. 구성 변경은 재시작해야 적용됩니다.
 부팅 시 시작과 Watchdog을 켜세요.
 
+## UUID 하나는 기기 하나에서만 사용하세요
+
+같은 UUID로 두 곳에서 접속하면 서버가 **나중에 접속한 쪽을 끊습니다**.
+라즈베리파이에서 HA로 옮길 때는 이전 파이의 AeroNexus 피더를 먼저 제거한 뒤 이 앱을 시작하세요.
+기존 설치 명령 끝에 `--uninstall`을 붙이면 됩니다.
+[이전 절차](https://github.com/guinueng/homeassistant-aeronexus-feeder/blob/main/aeronexus_feeder/INSTALL_KO.md#uuid를-다른-기기로-이전할-때)와 [공식 피더 FAQ](https://aeronexus.kr/feeder-faq.html)를 참조하세요.
+
+서버가 연결 직후 끊으면 로그에 **「UUID가 다른 곳에서 사용 중일 수 있습니다」**를 경고로 표시합니다.
+중복 사용 확정은 아니므로 UUID 등록/활성화 상태와 네트워크도 함께 확인하세요.
+
+기존 설치 명령의 `--uninstall`은 **이전 라즈베리파이에서** 실행하세요.
+
 ## 작동 개략도
 
 ```text
