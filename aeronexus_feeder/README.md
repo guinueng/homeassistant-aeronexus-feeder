@@ -2,6 +2,8 @@
 
 > **비공식 앱 (Unofficial)**: AeroNexus 운영자가 제공하는 공식 Home Assistant 앱이 아닙니다.
 
+공식 안내: [AeroNexus 공식 사이트](https://aeronexus.kr/landing.html) · [공식 피딩 방법](https://aeronexus.kr/landing.html#join)
+
 Home Assistant OS에서 기존 ADS-B Multi-Portal Feeder의 Beast 30005 출력을 AeroNexus로 전달합니다.
 `amd64`, `aarch64`를 지원하고 기본 구성 화면에는 UUID만 표시합니다.
 

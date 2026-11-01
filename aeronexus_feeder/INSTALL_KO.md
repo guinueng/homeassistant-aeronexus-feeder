@@ -1,5 +1,7 @@
 # 설치·경로·업데이트 가이드 — 1.1.3
 
+공식 안내: [AeroNexus 공식 사이트](https://aeronexus.kr/landing.html) · [공식 피딩 방법](https://aeronexus.kr/landing.html#join)
+
 ## 앱 버전과 관계없이 최신 중계기 받기
 
 1. 이 앱의 구성에서 **사용하지 않는 선택 옵션 표시**를 켭니다.
