@@ -34,8 +34,10 @@ class DisconnectHintTests(unittest.TestCase):
     def test_immediate_remote_eof_warns_once_without_uuid_value(self):
         sock = self.observed()
         self.now = 1.0
-        self.assertEqual(sock.recv(4096), b"")
-        sock.recv(4096)
+        with self.assertRaises(runner.UUIDConflictStop):
+            sock.recv(4096)
+        sock.remote_closed()
+        sock.sock.close.assert_called_once_with()
         self.assertEqual(len(self.messages), 1)
         self.assertIn("UUID가 다른 곳에서 사용 중일 수 있습니다", self.messages[0])
         self.assertNotIn(UUID, self.messages[0])
@@ -47,26 +49,30 @@ class DisconnectHintTests(unittest.TestCase):
                 self.setUp()
                 sock = self.observed()
                 self.now = age
-                sock.recv(4096)
+                if expected:
+                    with self.assertRaises(runner.UUIDConflictStop):
+                        sock.recv(4096)
+                else:
+                    self.assertEqual(sock.recv(4096), b"")
                 self.assertEqual(len(self.messages), expected)
 
-    def test_remote_reset_on_read_is_reported_and_reraised(self):
+    def test_remote_reset_on_read_stops_the_relay(self):
         for error in (ConnectionResetError, ConnectionAbortedError):
             with self.subTest(error=error):
                 self.setUp()
                 sock = self.observed()
                 sock.sock.recv.side_effect = error("remote closed")
-                with self.assertRaises(error):
+                with self.assertRaises(runner.UUIDConflictStop):
                     sock.recv(4096)
                 self.assertEqual(len(self.messages), 1)
 
-    def test_broken_pipe_or_reset_during_uuid_send_is_reported_and_reraised(self):
+    def test_broken_pipe_or_reset_during_uuid_send_stops_the_relay(self):
         for error in (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
             with self.subTest(error=error):
                 self.setUp()
                 sock = self.observed()
                 sock.sock.sendall.side_effect = error("remote closed")
-                with self.assertRaises(error):
+                with self.assertRaises(runner.UUIDConflictStop):
                     sock.sendall(b"\x1a\xe4" + UUID.encode())
                 self.assertEqual(len(self.messages), 1)
 
@@ -86,14 +92,12 @@ class DisconnectHintTests(unittest.TestCase):
         self.assertEqual(self.messages, [])
         sock.sock.close.assert_called_once_with()
 
-    def test_reconnect_warnings_are_limited_to_one_per_minute(self):
-        self.observed().recv(4096)
-        self.now = 5.0
-        self.observed().recv(4096)
-        self.assertEqual(len(self.messages), 1)
-        self.now = 60.0
-        self.observed().recv(4096)
-        self.assertEqual(len(self.messages), 2)
+    def test_stop_escapes_the_official_exception_retry_handler(self):
+        with self.assertRaises(runner.UUIDConflictStop):
+            try:
+                self.observed().recv(4096)
+            except Exception:
+                self.fail("Official Exception handlers must not swallow the stop signal")
 
     def test_only_destination_socket_is_observed_and_connect_failure_is_not(self):
         raw = Mock()
@@ -125,9 +129,16 @@ class DisconnectHintTests(unittest.TestCase):
             peer.close()
         self.assertEqual(self.messages, [])
 
-    def test_diagnostic_failure_does_not_change_eof(self):
+    def test_diagnostic_failure_does_not_prevent_stopping(self):
         self.hints.log = Mock(side_effect=OSError("log unavailable"))
-        self.assertEqual(self.observed().recv(4096), b"")
+        with self.assertRaises(runner.UUIDConflictStop):
+            self.observed().recv(4096)
+
+    def test_socket_cleanup_failure_still_stops_the_relay(self):
+        sock = self.observed()
+        sock.sock.close.side_effect = OSError("already closed")
+        with self.assertRaises(runner.UUIDConflictStop):
+            sock.recv(4096)
 
 
 class OfficialDisconnectLoggingTests(unittest.TestCase):
@@ -161,7 +172,13 @@ class OfficialDisconnectLoggingTests(unittest.TestCase):
                     remote.shutdown(socket.SHUT_RDWR)
                     remote.close()
                     self.assertTrue(observed.wait(5), "Expected disconnect diagnostic was not logged")
-                    self.assertTrue(worker.alive(), "Official reconnect loop must remain active")
+                    if close_server:
+                        self.assertEqual(worker.process.wait(timeout=5), runner.UUID_CONFLICT_EXIT)
+                        destination.settimeout(.2)
+                        with self.assertRaises(socket.timeout):
+                            destination.accept()
+                    else:
+                        self.assertTrue(worker.alive(), "A Beast disconnect must retain normal reconnects")
                 finally:
                     worker.stop()
                     manager.LOG.removeHandler(handler)

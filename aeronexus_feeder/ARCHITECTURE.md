@@ -1,4 +1,4 @@
-# 로직 작동 개략도 — AeroNexus Feeder 1.1.3
+# 로직 작동 개략도 — AeroNexus Feeder 1.1.4
 
 현재 구현 기준의 TUI 개략도입니다. **앱 설치**, **공식 중계기 확인**, **실제 ADS-B 전송**은 아래처럼 이어집니다.
 
@@ -168,15 +168,20 @@ Beast 주소 재탐색과 연결 재시도는 중계를 유지하는 동작이�
 [HA runner observes the destination socket]
                       |
                       +-- EOF / reset / broken pipe within 10 seconds
-                      |     -> UUID conflict possibility -> WARNING log
-                      |     -> At most one extra notice per 60 seconds
+                      |     -> WARNING -> Stop relay (exit 78)
+                      |     -> Manager blocks retry and rollback
+                      |     -> Supervisor: stop self (watchdog-safe)
+                      |          API unavailable -> Remain idle, no relay
                       |
                       +-- Source close / timeout / local close / later close
                             -> Original log only
 
-Official Python source / wire bytes / reconnect loop: unchanged
+Official Python source / wire bytes: unchanged
+Retry after suspected UUID conflict: disabled until next app run
 ```
 
+이 경우 중계기를 종료하고 자동 재접속을 중단합니다. 원인 해결 후 앱을 다시 시작하세요.
+중지 API 실패 시 앱 컨테이너는 대기할 수 있지만 중계는 종료되어 있습니다.
 경고는 중복 UUID의 가능성입니다. 이전 기기의 AeroNexus 피더를 먼저 제거하고 UUID 등록/활성화 상태도 확인하세요.
 UUID 하나를 두 기기에서 쓰면 서버가 나중에 접속한 쪽을 끊습니다.
 

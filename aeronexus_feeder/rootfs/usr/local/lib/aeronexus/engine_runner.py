@@ -10,13 +10,18 @@ import time
 MAX_CODE = 512 * 1024
 UUID_WARNING_PREFIX = "[HA UUID warning] "
 EARLY_DISCONNECT_S = 10.0
-UUID_WARNING_COOLDOWN_S = 60.0
+UUID_CONFLICT_EXIT = 78
 UUID_IN_USE_HINT = (
     "UUID가 다른 곳에서 사용 중일 수 있습니다. UUID 하나는 기기 하나에서만 사용하세요. "
     "라즈베리파이에서 HA로 옮겼다면 파이 쪽 AeroNexus 피더를 먼저 제거하세요 "
     "(기존 설치 명령 끝에 --uninstall). UUID 등록/활성화 상태와 네트워크도 확인하세요. "
-    "https://aeronexus.kr/feeder-faq.html"
+    "https://aeronexus.kr/feeder-faq.html "
+    "재접속을 중단하고 이 중계기를 종료합니다. 원인을 해결한 뒤 HA 앱을 수동으로 다시 시작하세요."
 )
+
+
+class UUIDConflictStop(BaseException):
+    """Leave the official relay's broad Exception retry handlers immediately."""
 
 
 class DisconnectHints:
@@ -24,20 +29,17 @@ class DisconnectHints:
     def __init__(self, log, clock=None):
         self.log = log
         self.clock = clock or time.monotonic
-        self.last_notice = None
 
     def report(self, connected_at):
         now = self.clock()
         if not 0 <= now - connected_at <= EARLY_DISCONNECT_S:
-            return
-        if self.last_notice is not None and now - self.last_notice < UUID_WARNING_COOLDOWN_S:
-            return
-        self.last_notice = now
+            return False
         try:
             self.log(UUID_WARNING_PREFIX + UUID_IN_USE_HINT)
         except Exception:
-            # Diagnostics must not change socket results or the relay's reconnect loop.
+            # A broken log sink must not prevent stopping repeated UUID attempts.
             pass
+        return True
 
 
 class ObservedFeedSocket:
@@ -55,7 +57,11 @@ class ObservedFeedSocket:
     def remote_closed(self):
         if not self.closed and not self.reported:
             self.reported = True
-            self.hints.report(self.connected_at)
+            if self.hints.report(self.connected_at):
+                try:
+                    self.close()
+                finally:
+                    raise UUIDConflictStop()
 
     def recv(self, *args, **kwargs):
         try:
@@ -199,7 +205,11 @@ def main():
             hints = DisconnectHints(namespace["log"])
             namespace["connect"] = runtime_connect(
                 original_connect, namespace["FEED_HOST"], namespace["FEED_PORT"], hints)
-        sys.exit(namespace["main"]())
+        try:
+            result = namespace["main"]()
+        except UUIDConflictStop:
+            result = UUID_CONFLICT_EXIT
+        sys.exit(result)
 
 
 if __name__ == "__main__":

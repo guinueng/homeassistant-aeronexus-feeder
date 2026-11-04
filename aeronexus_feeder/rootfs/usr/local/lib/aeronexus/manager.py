@@ -16,7 +16,8 @@ from relay import ConfigError, DiscoveryError, Settings, SourceResolver
 from upstream import RUNNER, Candidate, UpdateError, VersionStore, child_environment, child_identity
 from app_version import APP_VERSION
 from refresh import clear_refresh_request
-from engine_runner import UUID_WARNING_PREFIX
+from engine_runner import UUID_WARNING_PREFIX, UUID_CONFLICT_EXIT
+from shutdown import request_app_stop
 
 LOG = logging.getLogger("aeronexus")
 PROBATION = 30.0
@@ -65,6 +66,9 @@ class Worker:
     def alive(self):
         return self.process is not None and self.process.poll() is None
 
+    def exit_code(self):
+        return self.process.poll() if self.process is not None else None
+
     def stop(self):
         process = self.process
         if process is not None:
@@ -108,6 +112,7 @@ class Manager:
         self.endpoint = None
         self.next_resolve = self.next_start = 0.0
         self.restart_delay = 2.0
+        self.connection_stopped = False
         if self.check_pending:
             # A new HA adapter may be compatible with a previously rejected relay.
             store.state.pop("rejected", None)
@@ -133,13 +138,29 @@ class Manager:
             LOG.warning("Upstream update not applied: %s; keeping code=%s", exc, self.active.sha256[:12])
             LOG.info("No periodic retry; restart the app to retry this initial check")
 
+    def stop_for_uuid_conflict(self):
+        if self.connection_stopped:
+            return True
+        if self.worker.exit_code() != UUID_CONFLICT_EXIT:
+            return False
+        self.connection_stopped = True
+        self.pending = None
+        self.probation_until = None
+        self.worker.stop()
+        LOG.warning("UUID 중복 사용이 의심되어 재접속을 중단했습니다. 이전 기기의 AeroNexus 피더를 제거하거나 UUID 등록/활성화 상태를 확인한 뒤 이 앱을 수동으로 다시 시작하세요")
+        return True
+
     def tick(self, now: float):
+        if self.stop_for_uuid_conflict():
+            return
         if self.check_pending:
             self.check_pending = False
             self.check()
         if now >= self.next_resolve:
             try:
                 endpoint = self.resolver.resolve()
+                if self.stop_for_uuid_conflict():
+                    return
                 if endpoint != self.endpoint:
                     self.worker.stop()
                     self.endpoint = endpoint
@@ -161,6 +182,8 @@ class Manager:
 
         if self.probation_until is not None:
             if not self.worker.alive():
+                if self.stop_for_uuid_conflict():
+                    return
                 LOG.warning("New relay exited during its 30-second startup check; rolling back to %s", self.active.sha256[:12])
                 self.store.reject(self.pending)
                 self.pending = None
@@ -176,6 +199,8 @@ class Manager:
                 LOG.info("Official relay update active: %s", self.active.sha256[:12])
 
         if self.probation_until is None and not self.worker.alive() and self.endpoint and now >= self.next_start:
+            if self.stop_for_uuid_conflict():
+                return
             try:
                 self.worker.start(self.active, *self.endpoint)
             except (OSError, UpdateError) as exc:
@@ -192,6 +217,14 @@ class Manager:
         try:
             while not stopped.is_set():
                 self.tick(time.monotonic())
+                if self.connection_stopped:
+                    if not stopped.is_set():
+                        LOG.warning("Relay stopped; requesting intentional app stop from Supervisor")
+                        request_app_stop()
+                    # Stay idle if the API is unavailable. Exiting here could
+                    # make S6/Supervisor restart us and retry the same UUID.
+                    stopped.wait()
+                    break
                 stopped.wait(1)
         finally:
             self.worker.stop()

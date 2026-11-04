@@ -1,4 +1,4 @@
-# AeroNexus Feeder 1.1.3
+# AeroNexus Feeder 1.1.4
 
 > **비공식 앱 (Unofficial)**: AeroNexus 운영자가 제공하는 공식 Home Assistant 앱이 아닙니다.
 
@@ -22,7 +22,8 @@ Home Assistant OS에서 기존 ADS-B Multi-Portal Feeder의 Beast 30005 출력�
 기존 설치 명령 끝에 `--uninstall`을 붙이면 됩니다.
 [이전 절차](INSTALL_KO.md#uuid를-다른-기기로-이전할-때)와 [공식 피더 FAQ](https://aeronexus.kr/feeder-faq.html)를 참조하세요.
 
-서버가 연결 직후 끊으면 로그에 **「UUID가 다른 곳에서 사용 중일 수 있습니다」**를 경고로 표시합니다.
+서버가 연결 직후 끊으면 **「UUID가 다른 곳에서 사용 중일 수 있습니다」**를 경고로 남기고 **이 중계기를 종료하며 자동 재접속을 중단합니다**.
+HA에도 자기 앱의 중지를 요청합니다. 이전 기기의 피더 제거 등 원인을 해결한 뒤 앱을 다시 시작하세요.
 중복 사용 확정은 아니므로 UUID 등록/활성화 상태와 네트워크도 함께 확인하세요.
 
 ## 앱 버전과 관계없이 최신 중계기 받기
@@ -50,7 +51,8 @@ Terminal/File editor 작업은 필요 없습니다. 성공하면 요청 옵션�
 | `Dockerfile` | HA base 3.24 + Python + 일반 사용자 |
 | `rootfs/.../manager.py` | HA 설정·탐색·작업 프로세스·업데이트/복구 |
 | `rootfs/.../upstream.py` | 공식 다운로드·추출·검증·버전 캐시 |
-| `rootfs/.../engine_runner.py` | 일반 사용자 검사/실행, 서버 즉시 종료 진단 |
+| `rootfs/.../engine_runner.py` | 일반 사용자 검사/실행, UUID 중복 의심 시 중계 종료 |
+| `rootfs/.../shutdown.py` | Supervisor에 자기 앱의 의도적인 중지 요청 |
 | `rootfs/.../bundled_relay.py` | 네트워크 장애 시 초기 원본 중계기 |
 | `rootfs/.../relay.py`, `beast.py` | 설정/탐색 함수와 1.0 전송기 회귀 검사 |
 | `translations/` | 한국어/영어 UI |

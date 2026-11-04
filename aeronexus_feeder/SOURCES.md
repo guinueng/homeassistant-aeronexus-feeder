@@ -45,3 +45,10 @@ AeroNexus 프로토콜 출처는 사용자가 업로드한 스크립트입니다
 - [공식 피더 FAQ](https://aeronexus.kr/feeder-faq.html) 주소와 제거 명령 형식은 제공된 원본 feed.sh에도 포함되어 있습니다.
 - 공식 Python의 소스와 전송 바이트는 유지하고 HA 실행부에서 연결 직후 종료의 가능성 경고만 추가했습니다.
 - 서버의 UUID 중복 판정을 조회하는 API는 추가하지 않았습니다. 경고는 접속 종료 시점을 바탕으로 한 가능성 안내입니다.
+
+## 1.1.4 중지 정책 — 2026-11-04
+
+- [Supervisor 앱 API](https://contributors.home-assistant.io/apps/supervisor-api/apps/): 자기 앱의 POST /addons/self/stop 호출.
+- [Supervisor 보안 검사](https://github.com/home-assistant/supervisor/blob/main/supervisor/api/middleware/security.py): self/stop에 별도 관리자 권한 불필요.
+- [Supervisor 앱 stop/watchdog](https://github.com/home-assistant/supervisor/blob/main/supervisor/apps/app.py): stop 시 수동 중지 표시, Watchdog의 수동 중지 제외 확인.
+- API 응답은 모의 검사로 검증하며 실제 사용자 HAOS에서의 앱 중지는 미실측입니다.

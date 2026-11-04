@@ -19,7 +19,8 @@
 기존 설치 명령 끝에 `--uninstall`을 붙이면 됩니다.
 [이전 절차](https://github.com/guinueng/homeassistant-aeronexus-feeder/blob/main/aeronexus_feeder/INSTALL_KO.md#uuid를-다른-기기로-이전할-때)와 [공식 피더 FAQ](https://aeronexus.kr/feeder-faq.html)를 참조하세요.
 
-서버가 연결 직후 끊으면 로그에 **「UUID가 다른 곳에서 사용 중일 수 있습니다」**를 경고로 표시합니다.
+서버가 연결 직후 끊으면 **「UUID가 다른 곳에서 사용 중일 수 있습니다」**를 경고로 남기고 **이 중계기를 종료하며 자동 재접속을 중단합니다**.
+HA에도 자기 앱의 중지를 요청합니다. 이전 기기의 피더 제거 등 원인을 해결한 뒤 앱을 다시 시작하세요.
 중복 사용 확정은 아니므로 UUID 등록/활성화 상태와 네트워크도 함께 확인하세요.
 
 기존 설치 명령의 `--uninstall`은 **이전 라즈베리파이에서** 실행하세요.

@@ -153,12 +153,14 @@ class UpstreamTests(unittest.TestCase):
 
 
 class FakeWorker:
-    def __init__(self): self.running, self.started = False, []
+    def __init__(self): self.running, self.started, self.code = False, [], None
     def start(self, candidate, host, port):
         self.started.append(candidate.release_id)
         self.running = True
+        self.code = None
     def stop(self): self.running = False
     def alive(self): return self.running
+    def exit_code(self): return self.code
 
 
 class Resolver:
