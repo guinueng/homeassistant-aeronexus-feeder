@@ -23,13 +23,18 @@ import upstream
 import refresh
 from test_relay import UUID, exact, frame, listener
 
-ORIGINAL = (APP / "upstream/feed_relay.original.py.txt").read_bytes()
+ORIGINAL = (APP / "tests/fixtures/feed_relay.original.py.txt").read_bytes()
 
 
 def installer(code=ORIGINAL, host="aeronexus.kr", port=30004):
     return (f'#!/bin/bash\nFEED_HOST="${{AERO_FEED_HOST:-{host}}}"\n'
             f'FEED_PORT="${{AERO_FEED_PORT:-{port}}}"\n'
             'cat > "$RELAY" <<\'PYEOF\'\n').encode() + code.rstrip(b"\n") + b"\nPYEOF\n"
+
+
+def official(code=ORIGINAL, host="aeronexus.kr", port=30004):
+    """A fixture with the same installer provenance as an official download."""
+    return upstream.extract(installer(code, host, port))
 
 
 class Response:
@@ -83,7 +88,7 @@ class UpstreamTests(unittest.TestCase):
 
     def test_child_does_not_inherit_supervisor_token_or_other_secrets(self):
         with patch.dict(os.environ, {"SUPERVISOR_TOKEN": "private", "GITHUB_TOKEN": "private"}):
-            env = upstream.child_environment(UUID, "receiver", 30005, "adsb", upstream.identify(ORIGINAL))
+            env = upstream.child_environment(UUID, "receiver", 30005, "adsb", official(ORIGINAL))
         self.assertNotIn("SUPERVISOR_TOKEN", env)
         self.assertNotIn("GITHUB_TOKEN", env)
         self.assertEqual(env["UUID"], UUID)
@@ -97,8 +102,9 @@ class UpstreamTests(unittest.TestCase):
     def test_cache_survives_restart_and_corruption_falls_back(self):
         with tempfile.TemporaryDirectory() as directory:
             store = upstream.VersionStore(Path(directory))
+            store.activate(official())
             first = store.working()
-            second = upstream.identify(ORIGINAL + b"\n# new official version\n")
+            second = official(ORIGINAL + b"\n# new official version\n")
             upstream.validate(second)
             store.activate(second)
             restored = upstream.VersionStore(Path(directory))
@@ -110,24 +116,29 @@ class UpstreamTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             self.assertIsNone(upstream.VersionStore(Path(directory)).load("../../secrets"))
 
-    def test_download_change_then_304_keeps_pending_update_available(self):
+    def test_each_check_downloads_full_body_even_when_http_dates_are_unchanged(self):
         with tempfile.TemporaryDirectory() as directory:
             store = upstream.VersionStore(Path(directory))
-            store.working()
+            store.activate(official())
             newer = ORIGINAL + b"\n# changed\n"
             with patch.object(upstream, "build_opener") as build:
-                build.return_value.open.return_value = Response(installer(newer), {"Last-Modified": "new-date"})
+                build.return_value.open.side_effect = [
+                    Response(installer(), {"ETag": "same", "Last-Modified": "same-date"}),
+                    Response(installer(newer), {"ETag": "same", "Last-Modified": "same-date"})]
+                store.check()
                 candidate = store.check()
                 self.assertEqual(candidate.code, newer)
-                build.return_value.open.side_effect = HTTPError(upstream.SOURCE_URL, 304, "", {}, None)
-                recovered = store.check()
-                self.assertEqual(recovered.release_id, candidate.release_id)
-                request = build.return_value.open.call_args.args[0]
-                self.assertEqual(request.get_header("If-modified-since"), "new-date")
+                for call in build.return_value.open.call_args_list:
+                    request = call.args[0]
+                    self.assertEqual(request.full_url, "https://aeronexus.kr/feed.sh")
+                    self.assertIsNone(request.get_header("If-modified-since"))
+                    self.assertIsNone(request.get_header("If-none-match"))
+                self.assertEqual((Path(directory) / "feed.sh").read_bytes(), installer(newer))
 
     def test_download_failure_keeps_active_cache(self):
         with tempfile.TemporaryDirectory() as directory:
             store = upstream.VersionStore(Path(directory))
+            store.activate(official())
             original = store.working()
             with patch.object(upstream, "build_opener") as build:
                 build.return_value.open.side_effect = URLError("offline")
@@ -170,6 +181,7 @@ class Resolver:
 class ManagerTests(unittest.TestCase):
     def setup_manager(self, directory):
         store = upstream.VersionStore(Path(directory))
+        store.activate(official())
         worker = FakeWorker()
         app = manager.Manager(relay.Settings(UUID), store, Resolver(), worker)
         return app, worker, store
@@ -177,7 +189,7 @@ class ManagerTests(unittest.TestCase):
     def test_checked_update_starts_then_commits_after_probation(self):
         with tempfile.TemporaryDirectory() as directory:
             app, worker, store = self.setup_manager(directory)
-            newer = upstream.identify(ORIGINAL + b"\n# new\n")
+            newer = official(ORIGINAL + b"\n# new\n")
             previous = app.active.release_id
             with patch.object(store, "check", return_value=newer):
                 app.tick(time.monotonic())
@@ -190,7 +202,7 @@ class ManagerTests(unittest.TestCase):
     def test_new_worker_crash_rolls_back_and_is_not_committed(self):
         with tempfile.TemporaryDirectory() as directory:
             app, worker, store = self.setup_manager(directory)
-            newer = upstream.identify(ORIGINAL + b"\n# crash\n")
+            newer = official(ORIGINAL + b"\n# crash\n")
             previous = app.active.release_id
             with patch.object(store, "check", return_value=newer):
                 app.tick(time.monotonic())
@@ -253,7 +265,7 @@ class ManagerTests(unittest.TestCase):
     def test_restart_during_probation_resumes_cached_candidate_without_http(self):
         with tempfile.TemporaryDirectory() as directory:
             app, _, store = self.setup_manager(directory)
-            newer = upstream.identify(ORIGINAL + b"\n# downloaded candidate\n")
+            newer = official(ORIGINAL + b"\n# downloaded candidate\n")
             with patch.object(store, "check", return_value=newer):
                 app.tick(time.monotonic())
             restored = upstream.VersionStore(Path(directory))
@@ -327,7 +339,7 @@ class OfficialWorkerTests(unittest.TestCase):
     def test_full_official_relay_forwards_uuid_adsb_and_excludes_mlat(self):
         source, destination = listener(), listener()
         settings = relay.Settings(UUID, "127.0.0.1", source.getsockname()[1])
-        candidate = upstream.identify(ORIGINAL, "127.0.0.1", destination.getsockname()[1])
+        candidate = official(ORIGINAL, "127.0.0.1", destination.getsockname()[1])
         worker = manager.Worker(settings)
         sockets = []
         try:

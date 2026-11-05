@@ -17,7 +17,7 @@ import relay
 import upstream
 from test_relay import UUID, exact, listener
 
-ORIGINAL = (APP / "upstream/feed_relay.original.py.txt").read_bytes()
+ORIGINAL = (APP / "tests/fixtures/feed_relay.original.py.txt").read_bytes()
 
 
 class DisconnectHintTests(unittest.TestCase):

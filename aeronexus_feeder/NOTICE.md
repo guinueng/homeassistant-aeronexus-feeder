@@ -15,7 +15,7 @@ UUID 하나당 기기 하나 원칙·이전 기기의 피더 제거·접속 직�
 - 업로드 원본 SHA-256:
   `57e2d8c11805a09407d018ce606a7b393e2250ae7f771a816d8777e6f7f677d6`
 - 원본의 `PYEOF` here-document 안 Python 중계기 344줄을
-  `upstream/feed_relay.original.py.txt`에 보관했습니다(UTF-8/LF, 실행 빌드에는 제외).
+  `tests/fixtures/feed_relay.original.py.txt`에 보관했습니다(UTF-8/LF, 실행 빌드에는 제외).
 - 서버 주소 `aeronexus.kr:30004`, UUID 프레임 `1A E4 + ASCII 36자`, Beast 심장박동,
   DF17/18 필터, MLAT timestamp 제외는 이 입력 원본을 기준으로 유지했습니다.
 - `beast.py`의 Splitter는 원본에서 추출한 파서를 사용합니다. E3 receiver-id의
@@ -31,5 +31,6 @@ FR24 파일 수정 절차를 실행하지 않습니다. 원격 `feed.sh`를 시�
 원본의 권리를 변경하지 않습니다.
 
 1.1.0부터 원본의 Python 중계기 전체를 공식 HTTPS 서버에서 검사/업데이트합니다.
-이미지의 bundled_relay.py는 네트워크 장애 시 초기 코드입니다. 원본 shell 설치기는 실행하지 않습니다.
+1.1.5부터 실행용 bundled_relay.py를 제거했습니다. 원본 표본은 tests/fixtures에만 두며 설치 이미지에 포함하지 않습니다.
+실행 중계기는 공식 서버에서 받은 코드와 그 정상 캐시만 사용합니다. 원본 shell 설치기는 실행하지 않습니다.
 기존 beast.py/relay.py 전송기는 1.0 회귀 검사 및 HA 설정/탐색 공용 함수로 남겨두었습니다.

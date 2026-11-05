@@ -1,4 +1,4 @@
-# 로직 작동 개략도 — AeroNexus Feeder 1.1.4
+# 로직 작동 개략도 — AeroNexus Feeder 1.1.5
 
 현재 구현 기준의 TUI 개략도입니다. **앱 설치**, **공식 중계기 확인**, **실제 ADS-B 전송**은 아래처럼 이어집니다.
 
@@ -12,7 +12,7 @@
 [Supervisor builds Dockerfile]
         |
         v
-[Installed app image]
+[Installed HA manager image; no official relay bundled]
         |
         | Start / Restart / Boot
         v
@@ -41,14 +41,14 @@
         +-- UUID empty --------------------> [Wait; no network]
         |
         v
-[Load working code from persistent cache / bundled fallback]
+[Load previously downloaded official cache, if any]
         |
         v
 [Upstream check needed?]
         |
         +-- NO ----------------------------> [Keep saved code selection]
         |
-        +-- YES --> [Download official feed.sh over HTTPS]
+        +-- YES --> [GET https://aeronexus.kr/feed.sh (full body)]
                                |
                                v
                     [Extract Python; do NOT execute shell]
@@ -56,11 +56,11 @@
                                v
                     [Syntax / interface / protocol checks]
                                |
-                               +-- FAIL --> [Keep working code]
+                               +-- FAIL --> [Keep official cache; idle if none]
                                +-- SAME --> [Use working code]
                                +-- NEW ---> [Save pending candidate]
 
-        All paths with a valid UUID join here:
+        Only paths with usable official code continue:
         |
         v
 [Resolve Beast source]
@@ -82,13 +82,14 @@
 최초 실행, 현재 앱 버전의 확인 성공 기록이 없는 경우, 새 HA 앱 버전 설치 후 첫 실행,
 또는 `refresh_upstream: true`인 경우 공식 코드를 한 번 확인합니다.
 새 후보의 30초 검사는 Beast 주소를 얻어 실제 프로세스를 시작한 뒤 진행합니다.
-검사 도중 앱이 재시작되면 저장된 후보 검사를 이어갈 수 있으며, 이를 위해 다시 다운로드하지는 않습니다.
+검사 도중 재시작되면 이전 정상 활성 캐시가 있을 때 저장된 후보 검사를 이어갑니다. 정상 활성 캐시도 없으면 공식 파일을 다시 받습니다.
 
 - 다운로드 주소: `https://aeronexus.kr/feed.sh`. shell/systemd 설치 명령은 실행하지 않고 Python 중계기 전체만 추출합니다.
 - 검사는 문법·필수 인터페이스·UUID·Beast escape·DF17/18·MLAT 제외와 모의 소켓 전송을 확인합니다.
 - **성공적으로 확인한 앱 버전**을 저장하므로 같은 버전의 일반 재시작과 HA 재부팅은 저장된 코드를 사용합니다.
-- 최초 확인이 실패하면 현재 코드로 동작하고 다음 앱 재시작 때 재시도합니다. 실행 중 주기적인 최신 버전 확인은 없습니다.
-- 저장된 활성 코드가 손상되면 이전 정상 캐시, 이어서 이미지에 포함된 초기 중계기 순으로 복구합니다.
+- 확인 실패 시 이전 정상 공식 캐시만 유지합니다. 없으면 중계를 시작하지 않고 다음 앱 재시작 때 재시도합니다. 정기 확인은 없습니다.
+- 활성 코드가 손상되면 이전 정상 공식 캐시만 사용합니다. GitHub 동봉 중계기 대체 실행은 없습니다.
+- 매 갱신 요청에서 설치 파일 전체를 받아 SHA-256을 비교하고 `/data/upstream/feed.sh`에 보관합니다.
 - 30초 생존은 프로세스 실행 검사입니다. 서버의 UUID 승인이나 자료 저장 성공은 AeroNexus 화면에서 확인해야 합니다.
 
 ## 3. 설정 UI에서 수동으로 갱신하면?

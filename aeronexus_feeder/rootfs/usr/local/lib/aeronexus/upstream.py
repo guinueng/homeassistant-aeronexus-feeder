@@ -26,7 +26,6 @@ MAX_RELAY = 512 * 1024
 TIMEOUT = 15
 HASH = re.compile(r"[0-9a-f]{64}")
 RUNNER = Path(__file__).with_name("engine_runner.py")
-BUNDLED = Path(__file__).with_name("bundled_relay.py")
 
 
 class UpdateError(RuntimeError):
@@ -154,13 +153,20 @@ class VersionStore:
             os.replace(temporary, path)
         self.state.setdefault("versions", {})[candidate.release_id] = {
             "feed_host": candidate.feed_host, "feed_port": candidate.feed_port,
-            "script_sha256": candidate.script_sha256}
+            "script_sha256": candidate.script_sha256, "source_url": SOURCE_URL}
 
     def load(self, digest: str | None) -> Candidate | None:
         if not isinstance(digest, str) or not HASH.fullmatch(digest):
             return None
         try:
             info = self.state.get("versions", {})[digest]
+            if not isinstance(info, dict):
+                return None
+            # Image-bundled relays have no official installer digest.
+            if not isinstance(info.get("script_sha256"), str) or not HASH.fullmatch(info["script_sha256"]):
+                return None
+            if info.get("source_url", SOURCE_URL) != SOURCE_URL:
+                return None
             candidate = identify((self.directory / (digest + ".py")).read_bytes(),
                                  info["feed_host"], int(info["feed_port"]), info.get("script_sha256", ""))
             if candidate.release_id != digest:
@@ -170,7 +176,7 @@ class VersionStore:
         except (OSError, ValueError, KeyError, TypeError, UpdateError):
             return None
 
-    def working(self) -> Candidate:
+    def working(self) -> Candidate | None:
         for key in ("active", "previous"):
             candidate = self.load(self.state.get(key))
             if candidate:
@@ -178,12 +184,9 @@ class VersionStore:
                     self.state["active"] = candidate.release_id
                     self.save_state()
                 return candidate
-        candidate = identify(BUNDLED.read_bytes())
-        validate(candidate)
-        self.save(candidate)
-        self.state["active"] = candidate.release_id
-        self.save_state()
-        return candidate
+        if self.state.pop("active", None) is not None:
+            self.save_state()
+        return None
 
     def activate(self, candidate: Candidate):
         self.save(candidate)
@@ -199,30 +202,21 @@ class VersionStore:
         self.save_state()
 
     def check(self) -> Candidate | None:
-        headers = {"User-Agent": f"AeroNexus-HA/{APP_VERSION}", "Accept": "text/plain"}
-        # Conditional GET is only used when a validated cached version exists.
-        cached_latest = self.state.get("latest") or self.state.get("active")
-        if cached_latest and self.load(cached_latest):
-            if self.state.get("etag"):
-                headers["If-None-Match"] = self.state["etag"]
-            if self.state.get("last_modified"):
-                headers["If-Modified-Since"] = self.state["last_modified"]
+        # Download the complete installer on each requested check and compare
+        # its contents, without GitHub versions or conditional HTTP responses.
+        headers = {"User-Agent": f"AeroNexus-HA/{APP_VERSION}", "Accept": "text/plain",
+                   "Cache-Control": "no-cache"}
         req = Request(SOURCE_URL, headers=headers)
+        LOG.info("공식 서버에서 설치 파일 다운로드: %s", SOURCE_URL)
         try:
             opener = build_opener(ProxyHandler({}), OfficialOriginOnly())
             with opener.open(req, timeout=TIMEOUT) as response:
                 data = response.read(MAX_SCRIPT + 1)
                 etag, modified = response.headers.get("ETag"), response.headers.get("Last-Modified")
         except HTTPError as exc:
-            if exc.code == 304:
-                self.state["checked_at"] = datetime.now(timezone.utc).isoformat()
-                self.save_state()
-                LOG.info("Official upstream check: unchanged (HTTP 304)")
-                latest = self.state.get("latest")
-                if latest != self.state.get("active") and latest != self.state.get("rejected"):
-                    return self.load(latest)
-                return None
-            raise UpdateError(f"Official download returned HTTP {exc.code}") from None
+            status = exc.code
+            exc.close()
+            raise UpdateError(f"Official download returned HTTP {status}") from None
         except (OSError, ValueError) as exc:
             raise UpdateError(f"Official download failed ({type(exc).__name__})") from None
         candidate = extract(data)
@@ -230,10 +224,18 @@ class VersionStore:
             LOG.warning("Latest upstream previously failed at runtime; keeping the working version (%s)", candidate.sha256[:12])
             return None
         validate(candidate)
+        old_script = self.state.get("script_sha256")
+        comparison = "최초 다운로드" if not old_script else ("변경 없음" if old_script == candidate.script_sha256 else "변경 감지")
+        source_path = self.directory / "feed.sh"
+        temporary = source_path.with_suffix(".new")
+        temporary.write_bytes(data)
+        temporary.chmod(0o600)
+        os.replace(temporary, source_path)
         self.save(candidate)
         self.state.update(etag=etag, last_modified=modified,
                           checked_at=datetime.now(timezone.utc).isoformat(),
                           latest=candidate.release_id, script_sha256=candidate.script_sha256)
         self.save_state()
+        LOG.info("공식 설치 파일 비교: %s (script=%s)", comparison, candidate.script_sha256[:12])
         LOG.info("Official upstream checked: relay=%s script=%s", candidate.sha256[:12], candidate.script_sha256[:12])
         return candidate

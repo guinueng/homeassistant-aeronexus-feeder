@@ -106,7 +106,8 @@ class Manager:
         self.worker = worker or Worker(settings)
         self.active = store.working()
         self.app_version = app_version
-        self.check_pending = settings.refresh_upstream or store.state.get("checked_app_version") != app_version
+        self.check_pending = (self.active is None or settings.refresh_upstream
+                              or store.state.get("checked_app_version") != app_version)
         self.pending = None
         self.probation_until = None
         self.endpoint = None
@@ -124,18 +125,24 @@ class Manager:
     def check(self):
         try:
             candidate = self.store.check()
-            if candidate and candidate.release_id != self.active.release_id:
+            if candidate and (self.active is None or candidate.release_id != self.active.release_id):
                 self.store.save(candidate)
                 self.store.state["latest"] = candidate.release_id
                 self.pending = candidate
                 self.probation_until = None
-                LOG.info("New official relay downloaded and validated: %s", candidate.sha256[:12])
+                previous = self.active.sha256[:12] if self.active else "none"
+                LOG.info("공식 중계기 교체 준비: %s -> %s", previous, candidate.sha256[:12])
+            elif candidate:
+                LOG.info("공식 중계기 비교: 변경 없음 (code=%s)", candidate.sha256[:12])
             self.store.state["checked_app_version"] = self.app_version
             self.store.save_state()
             if self.settings.refresh_upstream:
                 clear_refresh_request()
         except (UpdateError, OSError) as exc:
-            LOG.warning("Upstream update not applied: %s; keeping code=%s", exc, self.active.sha256[:12])
+            if self.active:
+                LOG.warning("Upstream update not applied: %s; keeping official cached code=%s", exc, self.active.sha256[:12])
+            else:
+                LOG.warning("공식 중계기 다운로드/검사 실패: %s. 공식 서버에서 받은 정상 코드가 없어 중계를 시작하지 않습니다", exc)
             LOG.info("No periodic retry; restart the app to retry this initial check")
 
     def stop_for_uuid_conflict(self):
@@ -156,6 +163,8 @@ class Manager:
         if self.check_pending:
             self.check_pending = False
             self.check()
+        if self.active is None and self.pending is None:
+            return
         if now >= self.next_resolve:
             try:
                 endpoint = self.resolver.resolve()
@@ -184,7 +193,8 @@ class Manager:
             if not self.worker.alive():
                 if self.stop_for_uuid_conflict():
                     return
-                LOG.warning("New relay exited during its 30-second startup check; rolling back to %s", self.active.sha256[:12])
+                previous = self.active.sha256[:12] if self.active else "none (relay remains stopped)"
+                LOG.warning("New relay exited during its 30-second startup check; rolling back to %s", previous)
                 self.store.reject(self.pending)
                 self.pending = None
                 self.probation_until = None
@@ -198,7 +208,7 @@ class Manager:
                 self.restart_delay = 2.0
                 LOG.info("Official relay update active: %s", self.active.sha256[:12])
 
-        if self.probation_until is None and not self.worker.alive() and self.endpoint and now >= self.next_start:
+        if self.active is not None and self.probation_until is None and not self.worker.alive() and self.endpoint and now >= self.next_start:
             if self.stop_for_uuid_conflict():
                 return
             try:

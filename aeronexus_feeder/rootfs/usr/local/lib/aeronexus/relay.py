@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Home Assistant app adapter for the supplied AeroNexus Python Beast relay.
+"""HA Settings/SourceResolver helpers and the legacy 1.0 test adapter.
+
+Production starts manager.py and runs only the official downloaded Python.
+The legacy Relay below is retained for regression tests, not selected by the app.
 
 Protocol/parser provenance is recorded in NOTICE.md. This program never modifies
 another app, starts a decoder, or listens on a TCP port.

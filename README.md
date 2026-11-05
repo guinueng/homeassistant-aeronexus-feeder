@@ -10,6 +10,18 @@
 [![Add app repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fguinueng%2Fhomeassistant-aeronexus-feeder)
 [![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/guinueng/homeassistant-aeronexus-feeder)
 
+## 중계기 다운로드 출처 — 1.1.5
+
+실행할 공식 중계기는 **`https://aeronexus.kr/feed.sh`에서 직접 받습니다**.
+UUID 입력 후 최초 실행, 새 HA 앱 버전으로 업데이트한 뒤 첫 실행, 또는 수동 갱신 요청 때
+설치 파일 전체를 새로 다운로드하고 기존 파일의 SHA-256과 비교합니다.
+변경된 Python 중계기 전체를 검사한 뒤 실행·적용하며, 설치 스크립트만 바뀌고 중계기가 같으면 재시작하지 않습니다.
+같은 앱 버전의 일반 재시작은 이전에 공식 서버에서 받은 정상 캐시를 사용합니다.
+
+GitHub 동봉 중계기 실행 경로는 제거했습니다. 최초 공식 다운로드가 실패하고 정상 캐시도 없으면 중계를 시작하지 않습니다.
+GitHub의 `tests/fixtures/` 원본은 검사용 표본이며 설치 이미지에 포함되지 않습니다.
+공식 중계기 갱신은 설정의 **다음 시작 시 최신 중계기 받기**를 켜고 저장·재시작하면 됩니다.
+
 ## UUID 하나는 기기 하나에서만 사용하세요
 
 같은 UUID로 두 곳에서 접속하면 서버가 **나중에 접속한 쪽을 끊습니다**.
@@ -55,7 +67,7 @@ GitHub 저장소 -> HA 설치/업데이트 -> 앱 이미지 빌드
 
 공식 AeroNexus 최신 코드를 확인하고 검증 후 적용합니다. 새 HA 앱 버전 배포나
 Terminal/File editor 작업은 필요 없습니다. 성공하면 요청 옵션을 자동으로 끕니다.
-실패하면 현재 코드로 실행하고 옵션을 켜 둬서 다음 재시작 때 재시도할 수 있습니다.
+실패하면 이전에 공식 서버에서 받은 정상 코드가 있을 때만 유지합니다. 옵션은 켜 둬 다음 재시작 때 재시도할 수 있습니다.
 옵션 자동 해제에 실패했다는 로그가 나오면 구성에서 직접 꺼 주세요.
 주기 확인은 활성화하지 않습니다.
 
@@ -75,7 +87,7 @@ https://github.com/guinueng/homeassistant-aeronexus-feeder
 
 버튼은 저장소 등록 화면을 엽니다. 앱 설치와 UUID 입력은 사용자 화면에서 마무리합니다.
 
-## 설치·업데이트 시 최신 중계기 확인 — 1.1.4
+## 설치·업데이트 시 최신 중계기 확인 — 1.1.5
 
 - **최초 실행과 새로운 앱 버전으로 업데이트한 뒤 첫 실행에만** 공식 `https://aeronexus.kr/feed.sh`를 확인합니다.
 - 확인 결과를 영구 저장하므로 같은 앱 버전의 재시작과 실행 중에는 다시 확인하지 않습니다.
@@ -86,7 +98,7 @@ https://github.com/guinueng/homeassistant-aeronexus-feeder
 - 원본에 일관된 릴리스 번호가 없어 SHA-256을 코드 버전으로 기록합니다.
 - 마지막 정상 버전은 `/data/upstream`에 보관하고 앱 백업에 포함합니다.
 
-1시간 주기 확인은 제거했습니다. 최초 확인이 실패하면 기존 코드로 실행하고 다음 앱 재시작 시 한 번 재시도합니다.
+1시간 주기 확인은 제거했습니다. 확인 실패 시 이전 정상 공식 캐시가 있을 때만 사용합니다. 캐시가 없으면 중계를 시작하지 않고 다음 재시작 때 재시도합니다.
 원본 shell/systemd 설치기는 실행하지 않습니다. 새 원본이 기존 인터페이스/프로토콜 검사와
 호환되지 않으면 기존 버전을 유지하고 로그를 남깁니다. 이 경우 HA 어댑터 업데이트가 필요할 수 있습니다.
 UUID가 비어 있으면 업데이트 확인을 포함한 네트워크 연결 없이 대기합니다.

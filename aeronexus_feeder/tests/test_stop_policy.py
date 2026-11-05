@@ -19,12 +19,13 @@ import relay
 import shutdown
 import upstream
 from test_relay import UUID
-from test_upstream import FakeWorker, ORIGINAL, Resolver, Response
+from test_upstream import FakeWorker, ORIGINAL, Resolver, Response, official
 
 
 class StopPolicyTests(unittest.TestCase):
     def make_manager(self, directory):
         store = upstream.VersionStore(Path(directory))
+        store.activate(official())
         worker = FakeWorker()
         app = manager.Manager(relay.Settings(UUID), store, Resolver(), worker)
         return app, worker, store
@@ -46,7 +47,7 @@ class StopPolicyTests(unittest.TestCase):
     def test_candidate_uuid_exit_does_not_roll_back_and_reconnect(self):
         with tempfile.TemporaryDirectory() as directory:
             app, worker, store = self.make_manager(directory)
-            newer = upstream.identify(ORIGINAL + b"\n# new candidate\n")
+            newer = official(ORIGINAL + b"\n# new candidate\n")
             active = app.active.release_id
             with patch.object(store, "check", return_value=newer):
                 app.tick(time.monotonic())
@@ -61,7 +62,7 @@ class StopPolicyTests(unittest.TestCase):
     def test_immediate_candidate_exit_is_detected_before_probation_rollback(self):
         with tempfile.TemporaryDirectory() as directory:
             app, worker, store = self.make_manager(directory)
-            newer = upstream.identify(ORIGINAL + b"\n# new candidate\n")
+            newer = official(ORIGINAL + b"\n# new candidate\n")
             original_start = worker.start
             def rejected_start(*args):
                 original_start(*args)

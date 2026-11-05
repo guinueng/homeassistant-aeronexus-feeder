@@ -1,5 +1,5 @@
 name: "AeroNexus Feeder"
-version: "1.1.4"
+version: "1.1.5"
 slug: "aeronexus_feeder"
 description: "Forward the existing ADS-B Multi-Portal Feeder Beast stream to AeroNexus"
 url: "https://github.com/guinueng/homeassistant-aeronexus-feeder"
